@@ -1,2 +1,2 @@
-# pybt
+# PyBT
 Behavior Trees in Python
