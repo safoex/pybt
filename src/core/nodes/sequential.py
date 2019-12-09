@@ -1,19 +1,24 @@
 from src.core.nodes.control import ControlNode
-from src.core.defs import State
+from definitions import State
 
 
 class Sequential(ControlNode):
-    Sequence = State.FAILURE
-    Fallback = State.SUCCESS
+    Sequence = State.SUCCESS
+    Fallback = State.FAILURE
     Skipper = State.RUNNING
+    Names = {
+        'sequence': Sequence,
+        'fallback': Fallback,
+        'skipper': Skipper
+    }
 
-    def __init__(self, return_state, name, memory):
+    def __init__(self, skip_state, name, memory):
         super().__init__(name, memory)
-        self.return_state = return_state
+        self.skip_state = skip_state
     
     def evaluate(self):
         for child in self.children:
             child_state = child.tick()
-            if child_state != self.return_state:
+            if child_state != self.skip_state:
                 return child_state
-        return self.return_state
+        return self.skip_state

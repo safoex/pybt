@@ -1,4 +1,4 @@
-from src.core.defs import State
+from definitions import State
 class Node: 
     def __init__(self, name, memory):
         self.id = name
@@ -28,26 +28,29 @@ class Node:
     def _after_tick(self):
         pass
     
-    def _dfs(self, handler):
-        if handler(self):
-            return True
+    def dfs(self, handler):
+        res = handler(self)
+        if res is not None:
+            return res
         if len(self.children):
             for child in self.children:
-                if child._dfs(self):
-                    return True
+                res = child.dfs(self)
+                if res is not None:
+                    return res
         else:
-            return False
+            return None
             
     def _bfs(self, handler):
         current = [self]
         nexts = []
         while len(current) != 0:
             for node in current:
-                if handler(node):
-                    return True
+                res = handler(node)
+                if res is not None:
+                    return res
                 else:
                     nexts += node.children
             
             current, nexts = nexts, current
             nexts.clear()
-        return False
+        return None

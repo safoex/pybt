@@ -1,10 +1,11 @@
 from ruamel import yaml
-
+from definitions import ROOT_DIR
+import html
 
 class Memory:
     def __init__(self):
         self.vars = {}
-        with open('memory_setup.py') as ms:
+        with open(ROOT_DIR + '/src/core/memory/memory_setup.py') as ms:
             self.exec(ms.read())
         self.exec('__service__ = _Service()')
         self.service = self.vars['__service__']
@@ -41,10 +42,36 @@ class Memory:
         self.exec_service('update')
         
     def build_action(self, expression):
-        return lambda: self._action_function(expression)
+        return lambda: self._action_function(self._unindent(expression))
     
     def build_condition(self, expression):
-        return lambda: eval(expression, self.vars)
+        return lambda: eval(self._unindent(expression), self.vars)
     
     def print_vars(self):
         print(yaml.dump({k: self.vars[k] for k in self.service.track}))
+
+    def _unindent(self, block, symbol=None):
+        def symbols_from_beginning(string, symbol='\t'):
+            tabs = 0
+            for c in string:
+                if c == symbol:
+                    tabs += 1
+                else:
+                    break
+            return tabs
+
+        if symbol is None:
+            return self._unindent(self._unindent(block, '\t'), ' ')
+
+        block = "".join([line+'\n' for line in block.split('\n') if len(line)])
+        block = block[:-1]
+
+        min_indent = symbols_from_beginning(block, symbol)
+
+        block_splitted = block.split('\n')
+        for line in block_splitted:
+            min_indent = min(min_indent, symbols_from_beginning(line, symbol))
+
+        res = "".join([line[min_indent:] + '\n' for line in block_splitted[:-1]])
+        res = res + block_splitted[-1][min_indent:]
+        return res

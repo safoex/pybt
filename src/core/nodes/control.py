@@ -16,7 +16,10 @@ class ControlNode(Node):
             after = self.find(after)
         if after is None or not isinstance(after, int):
             after = -2
-        self.children.insert(after+1, node)
+            self.children.insert(after+1, node)
+        elif isinstance(after, int) and after < 0:
+            after = len(self.children)
+        self.children.insert(after, node)
     
     def replace(self, node, old):
         index = self.find(old)
