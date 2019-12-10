@@ -43,7 +43,7 @@ class BehaviorTree(object):
         :param command: a Python object with a command:
             ERASE: [nodes]
             REPLACE: [(old_node_name, new_node)]
-            INSERT: {new_node_name, [(parent_node, i, new_node_def)]}
+            INSERT: [(parent_node, i, new_node_def)]
             Nodes are Python objects which have required fields but might contains extra info.
         :return: True if command successfully executed, False otherwise
         """
@@ -59,7 +59,7 @@ class BehaviorTree(object):
             cmd = command[BehaviorTree.INSERT]
             for parent, i, new_node in cmd:
                 if new_node.id in self.nodes:
-                    raise RuntimeWarning("an old node exists with the same name: " + n)
+                    raise RuntimeWarning("an old node exists with the same name: " + new_node.id)
                 if parent not in self.nodes:
                     raise RuntimeWarning("no parent node with the name: " + parent)
                 parent_node = self.nodes[parent]

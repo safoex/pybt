@@ -1,6 +1,10 @@
 from ruamel import yaml
 import src.core.nodes.sequential as sequential
 import src.core.nodes.leaf as leaf
+import src.core.tree.behavior_tree as behavior_tree
+from src.core.memory.memory import Memory
+import copy
+from definitions import State
 
 
 class Nodes(object):
@@ -46,11 +50,16 @@ class Nodes(object):
         elif type == 'condition':
             params = ['expression', 'true_state', 'false_state']
             self._check_and_raise(node, params, 'for node ' + id)
-            return leaf.Condition(name=id, memory=self.memory, **dict((k, node[k]) for k in params))
+            node_copy = copy.copy(node)
+            for state in ['true_state', 'false_state']:
+                if isinstance(node[state], str):
+                    node_copy[state] = State.from_str(node[state])
+            return leaf.Condition(name=id, memory=self.memory, **dict((k, node_copy[k]) for k in params))
         elif type in ['sequence', 'fallback', 'skipper']:
-            seq = sequential.Sequential(return_state=sequential.Sequential.Names[type], name=id, memory=self.memory)
+            seq = sequential.Sequential(skip_state=sequential.Sequential.Names[type], name=id, memory=self.memory)
             self._check_and_raise(node, 'children', 'for node ' + id)
             seq.children = node['children']
+            return seq
 
     @staticmethod
     def dump_to_python(obj):
@@ -74,7 +83,7 @@ class Nodes(object):
             pydict['false_state'] = obj.false_state
         if isinstance(obj, sequential.Sequential):
             for type in sequential.Sequential.Names:
-                if sequential.Sequential.Names[type] == obj.return_state:
+                if sequential.Sequential.Names[type] == obj.skip_state:
                     pydict['type'] = type
             pydict['children'] = [child.id for child in obj.children]
         return pydict
@@ -89,22 +98,22 @@ class Nodes(object):
         return yaml.safe_dump(pydict)
 
     def req_add_children(self, descriptions, bt, node_name):
-        for i, child in enumerate(descriptions[node_name].children):
-            new_node = self.build_from_python(descriptions[child], child)
-            new_node.children = []
-            bt.execute({child, [node_name, i, new_node]})
-            self.req_add_children(descriptions, bt, child)
+        if 'children' in descriptions[node_name]:
+            for i, child in enumerate(descriptions[node_name]['children']):
+                new_node = self.build_from_python(descriptions[child], child)
+                new_node.children = []
+                bt.execute({bt.INSERT: [(node_name, i, new_node)]})
+                self.req_add_children(descriptions, bt, child)
 
-    def build_collection(self, descriptions, bt, root_name=None):
+    def build_collection(self, descriptions, root_name):
         if isinstance(descriptions, str):
             descriptions = yaml.safe_load(descriptions)
         elif isinstance(descriptions, list):
             descriptions = {o.id: o for o in descriptions}
 
-        if bt.root_name is None and root_name is None:
-            raise RuntimeWarning('no root specified for .build_collection')
-        elif bt.root_name is None:
-            bt.root_name = root_name
+        root = self.build_from_python(descriptions[root_name], root_name)
+        root.children = []
+        bt = behavior_tree.BehaviorTree(self.memory, root)
 
-        bt.nodes[bt.root_name] = self.build_from_python(descriptions[bt.root_name], bt.root_name)
-        self.req_add_children(descriptions, bt, bt.root_name)
+        self.req_add_children(descriptions, bt, root_name)
+        return bt

@@ -50,7 +50,8 @@ class Memory:
     def print_vars(self):
         print(yaml.dump({k: self.vars[k] for k in self.service.track}))
 
-    def _unindent(self, block, symbol=None):
+    @staticmethod
+    def _unindent( block, symbol=None):
         def symbols_from_beginning(string, symbol='\t'):
             tabs = 0
             for c in string:
@@ -61,7 +62,7 @@ class Memory:
             return tabs
 
         if symbol is None:
-            return self._unindent(self._unindent(block, '\t'), ' ')
+            return Memory._unindent(Memory._unindent(block, '\t'), ' ')
 
         block = "".join([line+'\n' for line in block.split('\n') if len(line)])
         block = block[:-1]

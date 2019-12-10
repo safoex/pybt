@@ -57,7 +57,7 @@ class TestMemoryUtility(TestMemory):
 x = 1;
 y = 2;
         """
-        self.assertEqual(self.memory._unindent(block).strip(), cutted.strip())
+        self.assertEqual(Memory._unindent(block).strip(), cutted.strip())
 
 
 class TestMemoryBuild(TestMemory):
