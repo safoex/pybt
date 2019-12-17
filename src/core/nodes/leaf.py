@@ -8,7 +8,7 @@ class Leaf(Node):
         self.func = func
         self.true_state = true_state
         self.false_state = false_state
-    
+
     def evaluate(self):
         try:
             res = self.func()

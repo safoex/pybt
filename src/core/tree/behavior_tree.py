@@ -1,24 +1,27 @@
 from src.core.memory.memory import Memory
 from definitions import State
 from src.core.nodes.sequential import Sequential
+from src.core.io.io import Channel, Task
 
-class BehaviorTree(object):
+
+class BehaviorTree(Channel):
     TICK = 'TICK'
     ERASE = 'ERASE'
     REPLACE = 'REPLACE'
     INSERT = 'INSERT'
-    
-    def __init__(self, memory = None, root_node=None):
+
+    def __init__(self, name='behavior_tree', memory=None, root_node=None):
+        super().__init__(name, keywords={'behavior_tree'})
         self.memory = memory or Memory()
         self.root = root_node or Sequential(Sequential.Sequence, 'root', self.memory)
         self.nodes = {self.root.id: self.root}
 
     def execute(self, sample):
-        if sample == BehaviorTree.tick:
+        if sample == BehaviorTree.TICK:
             return self.tick()
         else:
             return self.apply_command(sample)
-        
+
     def tick(self):
         """
         top down recursive tick propagation from the root node
@@ -47,13 +50,11 @@ class BehaviorTree(object):
             Nodes are Python objects which have required fields but might contains extra info.
         :return: True if command successfully executed, False otherwise
         """
-        success = True
         if BehaviorTree.ERASE in command:
             for n in command[BehaviorTree.ERASE]:
                 if n in self.nodes:
                     self.nodes.pop(n)
                 else:
-                    success = False
                     raise RuntimeWarning("erasing node which does not exist")
         elif BehaviorTree.INSERT in command:
             cmd = command[BehaviorTree.INSERT]
@@ -74,3 +75,21 @@ class BehaviorTree(object):
                     self.apply_command({BehaviorTree.ERASE: [old_node_name]})
                     self.apply_command({BehaviorTree.INSERT: {new_node.id: [parent, i, new_node]}})
 
+    def on_message(self, task):
+        if task.sender_name == self.name:
+            return
+        if task.message == BehaviorTree.TICK:
+            return Task(message=self.execute(task.message), sender_name=self.name,
+                        keywords={'behavior_tree', 'state'})
+        if 'new' in task.keywords:
+            self.memory = task.message.memory
+            self.nodes = task.message.nodes
+            self.root = task.message.root
+        elif 'replace' in task.keywords:
+            self.apply_command({BehaviorTree.REPLACE: task.message})
+        elif 'insert' in task.keywords:
+            self.apply_command({BehaviorTree.INSERT: task.message})
+        elif 'erase' in task.keywords:
+            self.apply_command({BehaviorTree.ERASE: task.message})
+
+        return Task(message=self, sender_name=self.name, keywords={'behavior_tree', 'changed'})

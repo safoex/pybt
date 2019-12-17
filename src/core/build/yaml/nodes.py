@@ -2,13 +2,15 @@ from ruamel import yaml
 import src.core.nodes.sequential as sequential
 import src.core.nodes.leaf as leaf
 import src.core.tree.behavior_tree as behavior_tree
-from src.core.memory.memory import Memory
 import copy
 from definitions import State
+from src.core.build.yaml.generic import GenericBuilder
+from src.core.io.io import Task
 
 
-class Nodes(object):
+class Nodes(GenericBuilder):
     def __init__(self, memory):
+        super().__init__('nodes', {'nodes'})
         self.memory = memory
 
     @staticmethod
@@ -19,45 +21,45 @@ class Nodes(object):
             if p not in node:
                 raise RuntimeWarning("missing " + p + appendix)
 
-    def build_from_yaml(self, yml, id=None):
+    def build_from_yaml(self, yml, _id=None):
         """
         build python node from yaml representation for Action, Condition or Sequential classes.
         Note, that for Sequential .children list will be empty.
         Further processing fills .children with other nodes (objects, not just ids!).
         :param yml: string with yaml description of a node. Dictionary
-        :param id: you can provide an id explicitly or modify the one from yaml dictionary
+        :param _id: you can provide an id explicitly or modify the one from yaml dictionary
         :return: Action, Condition or Sequential node
         """
         node = yaml.safe_load(yml)
-        return self.build_from_python(node, id)
-    
-    def build_from_python(self, node, id=None):
+        return self.build_from_python(node, _id)
+
+    def build_from_python(self, node, _id=None):
         """
         build python node from yaml representation for Action, Condition or Sequential classes.
         Further processing replace names in .children with other nodes (objects, not just ids!).
         :param node: python dict with a description of a node. Dictionary
-        :param id: you can provide an id explicitly or modify the one from python dictionary
+        :param _id: you can provide an id explicitly or modify the one from python dictionary
         :return: Action, Condition or Sequential node
         """
-        if id is None:
+        if _id is None:
             self._check_and_raise(node, 'id')
-            id = node['id']
-        self._check_and_raise(node, 'type', 'for node '+id)
-        type = node['type']
-        if type == 'action':
-            self._check_and_raise(node, 'script', 'for node '+id)
-            return leaf.Action(name=id, memory=self.memory, expression=node['script'])
-        elif type == 'condition':
+            _id = node['id']
+        self._check_and_raise(node, 'type', 'for node ' + _id)
+        _type = node['type']
+        if _type == 'action':
+            self._check_and_raise(node, 'script', 'for node ' + _id)
+            return leaf.Action(name=_id, memory=self.memory, expression=node['script'])
+        elif _type == 'condition':
             params = ['expression', 'true_state', 'false_state']
-            self._check_and_raise(node, params, 'for node ' + id)
+            self._check_and_raise(node, params, 'for node ' + _id)
             node_copy = copy.copy(node)
             for state in ['true_state', 'false_state']:
                 if isinstance(node[state], str):
                     node_copy[state] = State.from_str(node[state])
-            return leaf.Condition(name=id, memory=self.memory, **dict((k, node_copy[k]) for k in params))
-        elif type in ['sequence', 'fallback', 'skipper']:
-            seq = sequential.Sequential(skip_state=sequential.Sequential.Names[type], name=id, memory=self.memory)
-            self._check_and_raise(node, 'children', 'for node ' + id)
+            return leaf.Condition(name=_id, memory=self.memory, **dict((k, node_copy[k]) for k in params))
+        elif _type in ['sequence', 'fallback', 'skipper']:
+            seq = sequential.Sequential(skip_state=sequential.Sequential.Names[_type], name=_id, memory=self.memory)
+            self._check_and_raise(node, 'children', 'for node ' + _id)
             seq.children = node['children']
             return seq
 
@@ -82,9 +84,9 @@ class Nodes(object):
             pydict['true_state'] = obj.true_state
             pydict['false_state'] = obj.false_state
         if isinstance(obj, sequential.Sequential):
-            for type in sequential.Sequential.Names:
-                if sequential.Sequential.Names[type] == obj.skip_state:
-                    pydict['type'] = type
+            for _type in sequential.Sequential.Names:
+                if sequential.Sequential.Names[_type] == obj.skip_state:
+                    pydict['type'] = _type
             pydict['children'] = [child.id for child in obj.children]
         return pydict
 
@@ -113,7 +115,32 @@ class Nodes(object):
 
         root = self.build_from_python(descriptions[root_name], root_name)
         root.children = []
-        bt = behavior_tree.BehaviorTree(self.memory, root)
+        bt = behavior_tree.BehaviorTree(memory=self.memory, root_node=root)
 
         self.req_add_children(descriptions, bt, root_name)
         return bt
+
+    def on_message(self, task):
+        nodes = task.message
+        if isinstance(task.message, str):
+            nodes = yaml.safe_load(task.message)
+        if not isinstance(nodes, dict):
+            raise RuntimeWarning('nodes could be loaded only from dict or yaml string')
+
+        # check if there are any not built templated node:
+        for node_name, node_def in nodes.items():
+            if 'type' in node_def and node_def['type'][:2] == 't/':
+                return Task(nodes, self.name, {'templates', 'node'}, priority=task.priority)
+
+        # find root:
+        root_name = None
+        for node_name, node_def in nodes.items():
+            if 'root' in node_def:
+                root_name = node_name
+        if root_name is None:
+            raise RuntimeWarning("Some node should be a root. (hint: add root field to node definition!)")
+
+        # build collection:
+        bt = self.build_collection(nodes, root_name)
+
+        return Task(bt, self.name, {'behavior_tree', 'new'})

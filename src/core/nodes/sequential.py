@@ -9,13 +9,13 @@ class Sequential(ControlNode):
     Names = {
         'sequence': Sequence,
         'fallback': Fallback,
-        'skipper': Skipper
+        'skipper' : Skipper
     }
 
     def __init__(self, skip_state, name, memory):
         super().__init__(name, memory)
         self.skip_state = skip_state
-    
+
     def evaluate(self):
         for child in self.children:
             child_state = child.tick()
