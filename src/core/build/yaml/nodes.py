@@ -18,7 +18,7 @@ class Nodes(GenericBuilder):
         if not isinstance(params, list):
             params = [params]
         for p in params:
-            if p not in node:
+            if p not in node or node[p] is None:
                 raise RuntimeWarning("missing " + p + appendix)
 
     def build_from_yaml(self, yml, _id=None):
@@ -44,22 +44,24 @@ class Nodes(GenericBuilder):
         if _id is None:
             self._check_and_raise(node, 'id')
             _id = node['id']
-        self._check_and_raise(node, 'type', 'for node ' + _id)
-        _type = node['type']
+        self._check_and_raise(node, 'type', ' for node ' + _id)
+        _type = copy.copy(node['type'])
         if _type == 'action':
-            self._check_and_raise(node, 'script', 'for node ' + _id)
+            self._check_and_raise(node, 'script', ' for node ' + _id)
             return leaf.Action(name=_id, memory=self.memory, expression=node['script'])
         elif _type == 'condition':
             params = ['expression', 'true_state', 'false_state']
-            self._check_and_raise(node, params, 'for node ' + _id)
+            self._check_and_raise(node, params, ' for node ' + _id)
             node_copy = copy.copy(node)
             for state in ['true_state', 'false_state']:
                 if isinstance(node[state], str):
                     node_copy[state] = State.from_str(node[state])
             return leaf.Condition(name=_id, memory=self.memory, **dict((k, node_copy[k]) for k in params))
-        elif _type in ['sequence', 'fallback', 'skipper']:
+        elif _type in ['sequence', 'fallback', 'skipper', 'selector']:
+            if _type == 'selector':
+                _type = 'fallback'
             seq = sequential.Sequential(skip_state=sequential.Sequential.Names[_type], name=_id, memory=self.memory)
-            self._check_and_raise(node, 'children', 'for node ' + _id)
+            self._check_and_raise(node, 'children', ' for node ' + _id)
             seq.children = node['children']
             return seq
 
@@ -130,7 +132,7 @@ class Nodes(GenericBuilder):
         # check if there are any not built templated node:
         for node_name, node_def in nodes.items():
             if 'type' in node_def and node_def['type'][:2] == 't/':
-                return Task(nodes, self.name, {'templates', 'node'}, priority=task.priority)
+                return Task(nodes, self.name, {'templated_nodes', 'node'}, priority=task.priority)
 
         # find root:
         root_name = None
@@ -143,4 +145,4 @@ class Nodes(GenericBuilder):
         # build collection:
         bt = self.build_collection(nodes, root_name)
 
-        return Task(bt, self.name, {'behavior_tree', 'new'})
+        return [Task(bt, self.name, {'behavior_tree', 'new'}), Task(nodes, self.name, {'nodes_for_tree'})]

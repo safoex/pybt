@@ -1,0 +1,160 @@
+templates:
+  condition:
+    vars:
+      RUNNING: 0
+      SUCCESS: 1
+      FAILURE: 2
+
+    args:
+      optional:
+        S: default
+        F: default
+
+    nodes:
+      $name:
+        type: skipper
+        children: [~SR, ~FR]
+        view:
+          S: $S
+          F: $F
+
+      ~SR:
+        type: condition
+        expression: $S
+        true_state: SUCCESS
+        false_state: RUNNING
+
+      ~FR:
+        type: condition
+        expression: $F
+        true_state: FAILURE
+        false_state: RUNNING
+
+    children: []
+
+  latch:
+    args:
+      required: [child]
+
+    nodes:
+      $name:
+        type: skipper
+        children: [~mask, $child]
+
+      ~mask:
+        parent: $name
+        type: t/condition
+        S: __STATE__$child == SUCCESS
+        F: __STATE__$child == FAILURE
+
+    children: [$child]
+
+
+
+  control_latches_simple:
+    args:
+      required: [children, control_type]
+      construct:
+        _children_latched:
+          from: children
+          V: $V_latch
+      view_exclude: [children]
+
+    nodes:
+      $name:
+        type: $control_type
+        children: $_children_latched
+
+    unpack:
+      children:
+        nodes:
+          $V_latch:
+            type: t/latch
+            child: $V
+
+    children: $children
+
+  seq_latches_simple:
+    args:
+      required: [children]
+
+    nodes:
+      $name:
+        type: t/control_latches_simple
+        children: $children
+        control_type: sequence
+
+    children: $children
+
+  control_latches:
+    args:
+      required: [children, control_type]
+      optional:
+        reset_var: ~reset
+      construct:
+        _reset_children:
+          from: children
+          V: $V_reset_action
+
+    vars:
+      $reset_var: True
+
+    nodes:
+      $name:
+        type: sequence
+        children: [~check_if_reset, ~seq_w_latches]
+        view:
+          reset: $reset_var
+
+      ~check_if_reset:
+        type: fallback
+        children: [~if_reset, ~reset_children_and_set_var_back]
+
+      ~if_reset:
+        type: t/condition
+        F: $reset_var == True
+        S: $reset_var != True
+
+      ~reset_children_and_set_var_back:
+        type: sequence
+        children: [~reset_children, ~set_var_back]
+
+      ~set_var_back:
+        type: action
+        script: $reset_var = False
+
+      ~reset_children:
+        type: sequence
+        children: $_reset_children
+
+      ~seq_w_latches:
+        type: t/control_latches_simple
+        children: $children
+        control_type: $control_type
+
+    unpack:
+      children:
+        nodes:
+          $V_reset_action:
+            type: action
+            script: __STATE__$V = RUNNING;
+
+    children: $children
+
+
+  seq_latches:
+    args:
+      required: [children]
+      optional:
+        reset_var: ~reset
+
+    nodes:
+      $name:
+        type: t/control_latches
+        children: $children
+        reset_var: $reset_var
+        control_type: sequence
+
+    children: $children
+
+

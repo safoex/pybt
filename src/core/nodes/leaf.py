@@ -16,6 +16,7 @@ class Leaf(Node):
                 return self.true_state
             return self.true_state if res else self.false_state
         except BaseException:
+            print('exception in ' + self.id)
             return self.false_state
 
 
