@@ -15,6 +15,8 @@ class Templates(Nodes):
         ['override']
     )
 
+    ANY = "AANNYY"
+
     def __init__(self, memory):
         super().__init__(memory)
         self.name = 'templates'
@@ -52,6 +54,22 @@ class Templates(Nodes):
                 if arg_name in text:
                     text = text.replace(arg_name, str(replacements[arg_name]))
         return text
+
+    @staticmethod
+    def get_all_argument_names(args_py):
+        args = []
+        has_optional = 'optional' in args_py
+        has_required = 'required' in args_py
+
+        if has_required:
+            for arg_name in args_py['required']:
+                args.append(arg_name)
+
+        if has_optional:
+            for arg_name in args_py['optional'].keys():
+                args.append(arg_name)
+
+        return args
 
     @staticmethod
     def get_optional_and_required_arguments(args_py, node_py):
@@ -146,6 +164,31 @@ class Templates(Nodes):
             template_py.pop('unpack')
             template_py = functools.reduce(Templates.merger.merge, unpacked, template_py)
         return template_py
+
+    def compile_pre_and_post_conditions(self, type_, args, lazy=False):
+        self._check_and_raise(self.templates, type_, ' in saved templates')
+
+        template = copy.copy(self.templates[type_])
+        # template = template.replace('~', '_$name_')
+        template_py = yaml.safe_load(template)
+
+        self._check_and_raise(template_py, 'args', 'in template ' + type_)
+
+        for arg in self.get_all_argument_names(template_py['args']):
+            if arg not in args:
+                args[arg] = Templates.ANY
+
+        replacements = self.get_optional_and_required_arguments(
+            self.get_args_without_self_dependenices(template_py['args'], args), args)
+
+        keys_for_planner = ['preconditions', 'postconditions']
+        template_py_for_planner = {k: v for k, v in template_py.items() if k in keys_for_planner}
+
+        template_text_for_planner = Templates.cyclicly_replace_args_in_text(replacements,
+                                                                            yaml.safe_dump(template_py_for_planner))
+
+        return yaml.safe_load(template_text_for_planner)
+
 
     def compile_templated_node(self, node_description_yaml, id_=None, lazy=False):
         """

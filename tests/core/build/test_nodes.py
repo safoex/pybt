@@ -6,6 +6,7 @@ from definitions import State
 from src.core.tree.behavior_tree import BehaviorTree
 from src.core.build.yaml.nodes import Nodes
 
+
 class TestNodes(TestCase):
     def setUp(self):
         self.memory = Memory()
