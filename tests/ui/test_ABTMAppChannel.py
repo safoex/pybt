@@ -43,9 +43,9 @@ class TestABTMAppChannel(TestCase):
                           root:
                             root: True
                             type: sequence
-                            children: [env_branch, check_me, init_branch]
-
-                          env_branch:
+                            children: [env_branch, check_me, init_branch]                                                                                                                                                                                                                                               
+                                                                                                                                                                                                                                        
+                          env_branch:                                                                                                                                           
                             type: action
                             script: ENV = 'ROS_SIM'
 
