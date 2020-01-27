@@ -189,6 +189,9 @@ class Templates(Nodes):
 
         return yaml.safe_load(template_text_for_planner)
 
+    def apply_build_script(self):
+        pass
+        # TODO: ...
 
     def compile_templated_node(self, node_description_yaml, id_=None, lazy=False):
         """

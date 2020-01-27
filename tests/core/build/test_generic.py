@@ -13,7 +13,7 @@ class TestGenericBuilder(TestCase):
         self.memories = Memories(self.memory)
         self.bt = BehaviorTree('behavior_tree', self.memory)
         self.nodes = Nodes(self.memory)
-        self.generic = GenericBuilder('builder', {'build'}, ['memory', 'vars', 'nodes'])
+        self.generic = GenericBuilder('builder', {'build'}, ['memory', 'vars', 'nodes', 'build'])
         self.io.reg(self.memories)
         self.io.reg(self.bt)
         self.io.reg(self.nodes)

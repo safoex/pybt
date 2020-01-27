@@ -16,6 +16,13 @@ class TestMemoryExec(TestMemory):
         self.memory.exec_service('set', {'x': 3})
         self.assertEqual(self.memory.vars['x'], 3)
 
+    def test_exec_function_with_result(self):
+        self.memory.exec('x = 3')
+        self.memory.exec('y = 5')
+        self.memory.exec('K = lambda a, b: a + b')
+        self.assertEqual(8, self.memory.exec_function_with_return('K(x,y)'))
+        self.assertEqual(10, self.memory.exec_function_with_return('K(z,t)', {'z': 7, 't': 3}))
+
 
 class TestMemoryUpdate(TestMemory):
     def test_set(self, test_in=False):
@@ -57,7 +64,7 @@ class TestMemoryUtility(TestMemory):
 x = 1;
 y = 2;
         """
-        self.assertEqual(Memory._unindent(block).strip(), cutted.strip())
+        self.assertEqual(Memory.unindent(block).strip(), cutted.strip())
 
 
 class TestMemoryBuild(TestMemory):

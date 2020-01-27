@@ -33,6 +33,25 @@ class Nodes(GenericBuilder):
         node = yaml.safe_load(yml)
         return self.build_from_python(node, _id)
 
+    def build_action_from_python(self, node, _id):
+        self._check_and_raise(node, 'script', ' for node ' + _id)
+        return leaf.Action(name=_id, memory=self.memory, expression=node['script'])
+
+    def build_condition_from_python(self, node, _id):
+        params = ['expression', 'true_state', 'false_state']
+        self._check_and_raise(node, params, ' for node ' + _id)
+        node_copy = copy.copy(node)
+        for state in ['true_state', 'false_state']:
+            if isinstance(node[state], str):
+                node_copy[state] = State.from_str(node[state])
+        return leaf.Condition(name=_id, memory=self.memory, **dict((k, node_copy[k]) for k in params))
+
+    def build_sequential_from_python(self, node, _id, _type):
+        seq = sequential.Sequential(skip_state=sequential.Sequential.Names[_type], name=_id, memory=self.memory)
+        self._check_and_raise(node, 'children', ' for node ' + _id)
+        seq.children = node['children']
+        return seq
+
     def build_from_python(self, node, _id=None):
         """
         build python node from yaml representation for Action, Condition or Sequential classes.
@@ -47,23 +66,13 @@ class Nodes(GenericBuilder):
         self._check_and_raise(node, 'type', ' for node ' + _id)
         _type = copy.copy(node['type'])
         if _type == 'action':
-            self._check_and_raise(node, 'script', ' for node ' + _id)
-            return leaf.Action(name=_id, memory=self.memory, expression=node['script'])
+            return self.build_action_from_python(node, _id)
         elif _type == 'condition':
-            params = ['expression', 'true_state', 'false_state']
-            self._check_and_raise(node, params, ' for node ' + _id)
-            node_copy = copy.copy(node)
-            for state in ['true_state', 'false_state']:
-                if isinstance(node[state], str):
-                    node_copy[state] = State.from_str(node[state])
-            return leaf.Condition(name=_id, memory=self.memory, **dict((k, node_copy[k]) for k in params))
+            return self.build_condition_from_python(node, _id)
         elif _type in ['sequence', 'fallback', 'skipper', 'selector']:
             if _type == 'selector':
                 _type = 'fallback'
-            seq = sequential.Sequential(skip_state=sequential.Sequential.Names[_type], name=_id, memory=self.memory)
-            self._check_and_raise(node, 'children', ' for node ' + _id)
-            seq.children = node['children']
-            return seq
+            return self.build_sequential_from_python(node, _id, _type)
 
     @staticmethod
     def dump_to_python(obj):

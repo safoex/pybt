@@ -10,10 +10,10 @@ class BehaviorTree(Channel):
     REPLACE = 'REPLACE'
     INSERT = 'INSERT'
 
-    def __init__(self, name='behavior_tree', memory=None, root_node=None):
+    def __init__(self, name='behavior_tree', memory=None, root_node=None, SequentialClass=Sequential):
         super().__init__(name, keywords={'behavior_tree'})
         self.memory = memory or Memory()
-        self.root = root_node or Sequential(Sequential.Sequence, 'root', self.memory)
+        self.root = root_node or SequentialClass(SequentialClass.Sequence, 'root', self.memory)
         self.nodes = {self.root.id: self.root}
 
     def execute(self, sample):

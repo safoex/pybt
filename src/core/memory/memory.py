@@ -16,6 +16,16 @@ class Memory:
         else:
             exec(code, self.vars)
 
+    def exec_function_with_return(self, function_code_call, args=None):
+        local_args = {'___result___': None}
+        if args is not None:
+            local_args.update(args)
+        code = "___result___ = " + function_code_call + '\n'
+
+        exec(code, self.vars, local_args)
+
+        return local_args['___result___']
+
     def exec_service(self, code, arg=None):
         if arg is not None:
             self.exec('__service__.' + code + '(locals())', arg)
@@ -42,16 +52,16 @@ class Memory:
         self.exec_service('update')
 
     def build_action(self, expression):
-        return lambda: self._action_function(self._unindent(expression))
+        return lambda: self._action_function(self.unindent(expression))
 
     def build_condition(self, expression):
-        return lambda: eval(self._unindent(expression), self.vars)
+        return lambda: eval(self.unindent(expression), self.vars)
 
     def print_vars(self):
         print(yaml.dump({k: self.vars[k] for k in self.service.track}))
 
     @staticmethod
-    def _unindent(block, symbol=None):
+    def unindent(block, symbol=None):
         def symbols_from_beginning(string, _symbol='\t'):
             tabs = 0
             for c in string:
@@ -62,7 +72,7 @@ class Memory:
             return tabs
 
         if symbol is None:
-            return Memory._unindent(Memory._unindent(block, '\t'), ' ')
+            return Memory.unindent(Memory.unindent(block, '\t'), ' ')
 
         block = "".join([line + '\n' for line in block.split('\n') if len(line)])
         block = block[:-1]
