@@ -189,9 +189,11 @@ class Templates(Nodes):
 
         return yaml.safe_load(template_text_for_planner)
 
-    def apply_build_script(self):
+    def apply_build_script(self, function_code, args, template_py):
+        return Templates.merger.merge(template_py, self.memory.exec_function_with_return(function_code, args))
+
+    def delayed_compile_templated_node(self, template_py, args):
         pass
-        # TODO: ...
 
     def compile_templated_node(self, node_description_yaml, id_=None, lazy=False):
         """
@@ -224,6 +226,11 @@ class Templates(Nodes):
 
         template_py = yaml.safe_load(template)
 
+        if 'make' in template_py:
+            replaced_args = {k[1:]: v for k, v in replacements.items()}
+            self.apply_build_script(template_py['make'], replaced_args, template_py)
+            template_py = yaml.safe_load(yaml.safe_dump(template_py).replace('~', '_$name_'))
+
         template_py = Templates.unpack_requirsevily(template_py, replacements)
 
         template_py.pop('args')
@@ -236,6 +243,7 @@ class Templates(Nodes):
             if 'nodes' in extra and node['id'] in extra['nodes']:
                 extra['nodes'][node['id']]['view'] = extra['view']
             extra.pop('view')
+
         if 'children' in extra:
             if 'nodes' in extra and node['id'] in extra['nodes']:
                 if 'view' not in extra['nodes'][node['id']]:

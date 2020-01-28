@@ -157,4 +157,10 @@ templates:
 
     children: $children
 
+  planning_action:
+    args:
+      required: [preconditions, script, postconditions]
+    make: action_with_preconditions(preconditions, script, postconditions)
+    children: []
+
 

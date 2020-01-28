@@ -9,9 +9,10 @@ from src.core.io.io import Task
 
 
 class Nodes(GenericBuilder):
-    def __init__(self, memory):
+    def __init__(self, memory, BehaviorTreeClass=behavior_tree.BehaviorTree):
         super().__init__('nodes', {'nodes'})
         self.memory = memory
+        self.BehaviorTreeClass = BehaviorTreeClass
 
     @staticmethod
     def _check_and_raise(node, params, appendix=""):
@@ -126,7 +127,7 @@ class Nodes(GenericBuilder):
 
         root = self.build_from_python(descriptions[root_name], root_name)
         root.children = []
-        bt = behavior_tree.BehaviorTree(memory=self.memory, root_node=root)
+        bt = self.BehaviorTreeClass(memory=self.memory, root_node=root)
 
         self.req_add_children(descriptions, bt, root_name)
         return bt

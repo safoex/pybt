@@ -2,10 +2,11 @@ from definitions import State
 
 
 class Node:
-    def __init__(self, name, memory):
+    def __init__(self, name, memory, no_add=False):
         self.id = name
         self.memory = memory
-        self.memory.add({self.state_key(): State.RUNNING})
+        if not no_add:
+            self.memory.add({self.state_key(): State.RUNNING})
         self.children = []
 
     def state_key(self):

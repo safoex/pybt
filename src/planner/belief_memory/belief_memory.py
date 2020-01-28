@@ -19,10 +19,30 @@ class BeliefMemory(BeliefStateSimple):
 
     def __init__(self, physical_state, prob=1):
         super().__init__(physical_state, prob)
+        ps = physical_state
+        if isinstance(physical_state, list):
+            ps = physical_state[0][0]
+        exec("", ps)
+        self.builtins = ps['__builtins__']
+        ps.pop('__builtins__')
+
+    def _eval(self, expression, physical_state):
+        physical_state['__builtins__'] = self.builtins
+        res = eval(expression, physical_state)
+        self.builtins = physical_state['__builtins__']
+        physical_state.pop('__builtins__')
+        return res
+
+    def _exec(self, script, physical_state):
+        physical_state['__builtins__'] = self.builtins
+        exec(script, physical_state)
+        self.builtins = physical_state['__builtins__']
+        physical_state.pop('__builtins__')
 
     @staticmethod
     def _is_leaf_a_condition(leaf):
-        return 'R' in leaf or 'S' in leaf
+        return 'R' in leaf or 'S' in leaf or \
+               ('true_state' in leaf and 'false_state' in leaf and 'expression' in leaf)
 
     def build(self, expression):
         leaf = expression
@@ -49,22 +69,32 @@ class BeliefMemory(BeliefStateSimple):
 
         if BeliefMemory._is_leaf_a_condition(leaf):
             def func(ps):
-                if 'R' in leaf and eval(leaf['R'], ps):
+                if 'true_state' in leaf:
+                    return leaf['true_state'][0] if self._eval(leaf['expression'], ps) else leaf['false_state'][0]
+                if 'R' in leaf and self._eval(leaf['R'], ps):
                     return 'R'
-                return 'S' if eval(leaf['S']) else 'F'
+                return 'S' if self._eval(leaf['S'], ps) else 'F'
 
             return self.bucketize(func)
         else:
             # now support only postconditions
             all_states = []
             for effect in leaf['postconditions']:
-                prob, code = effect['prob'], effect['code']
+                prob, code = effect['prob'], effect['action']
 
                 def func(ps):
-                    exec(code, ps)
+                    self._exec(code, ps)
 
-                bss = BeliefMemory(copy.deepcopy(self.states), prob)
-                all_states += bss.apply_function(func)
-            result = BeliefMemory(all_states)
-            result.simplify()
-            return [('S', result)]
+                bss = type(self)(copy.deepcopy(self.states), prob)
+                bss.apply_function(func)
+                all_states += bss.states
+            self.states = all_states
+            self.simplify()
+            return [('S', self)]
+
+    def __deepcopy__(self, memo):
+        return type(self)(copy.deepcopy(self.states))
+
+    def __copy__(self):
+        return type(self)(copy.copy(self.states))
+
