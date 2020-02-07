@@ -1,0 +1,45 @@
+types:
+  object: [can, bottle]
+  location: [kitchen, postdocroom]
+  place: [table1, table2]
+
+vars:
+  location: postdocroom
+  grasped: null
+  close_to_object:
+    can: RUNNING
+    bottle: RUNNING
+  closeness:
+    kitchen:
+      table1: true
+      table2: true
+    postdocroom:
+      table1: false
+      table2: false
+  seen:
+    can: RUNNING
+    bottle: RUNNING
+    table1: RUNNING
+    table2: RUNNING
+  has:
+    table1:
+      can: RUNNING
+      bottle: RUNNING
+    table2:
+      can: RUNNING
+      bottle: RUNNING
+  luminousity:
+    kitchen: FAILURE
+    postdocroom: FAILURE
+
+
+actions:
+  t/goto:
+    place: place
+  t/put:
+    object: object
+    place: place
+  t/grasp:
+    object: object
+  t/detect:
+    object: object

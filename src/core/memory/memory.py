@@ -86,3 +86,4 @@ class Memory:
         res = "".join([line[min_indent:] + '\n' for line in block_splitted[:-1]])
         res = res + block_splitted[-1][min_indent:]
         return res
+

@@ -1,6 +1,7 @@
 from queue import PriorityQueue
 from functools import total_ordering
 
+
 @total_ordering
 class Task:
     def __init__(self, message, sender_name, keywords=None, priority=None):
@@ -66,6 +67,15 @@ class Channel:
                 self._io.accept(Task(message, self.name, keywords, priority))
 
 
+class Hook(Channel):
+    def __init__(self, name, keywords, hook_function):
+        super().__init__(name, keywords, None)
+        self.hook = hook_function
+
+    def on_message(self, task):
+        return self.hook(task)
+
+
 class IO:
     def __init__(self):
         self.listeners = dict()
@@ -88,6 +98,21 @@ class IO:
                 self.keywords_to_listeners[keyword].add(listener)
 
         listener._io = self
+
+    def unreg(self, listener):
+        if listener.name not in self.listeners:
+            raise RuntimeWarning("Listener " + listener.name + " is not added or already unregistered!")
+
+        self.listeners.pop(listener.name)
+        if listener.using_filter_function:
+            self.listeners_with_filter_function.remove(listener)
+        else:
+            for keyword in listener.keywords:
+                self.keywords_to_listeners[keyword].remove(listener)
+                if len(self.keywords_to_listeners[keyword]) == 0:
+                    self.keywords_to_listeners.pop(keyword)
+
+        listener._io = None
 
     def accept(self, task_s, move_to_end=True):
         """
@@ -146,4 +171,3 @@ class IO:
         :return:
         """
         self.run(stop_function=lambda: self.tasks.empty())
-

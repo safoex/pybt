@@ -66,6 +66,6 @@ class TestPlanningNodes(TestCase):
             'b': 0
         })
 
-        res = dict(bt.tick())
-        print(res)
-        self.assertEqual(0.75, res['F'].prob())
+        res = bt.tick().apply_delayed_actions()
+        res = bt.tick(res).apply_delayed_actions()
+        self.assertEqual(0.5, res.prob({res.state_key: 'F'}))

@@ -1,6 +1,7 @@
 from unittest import TestCase
 from src.planner.belief_memory.belief_memory import BeliefMemory
 
+
 def set_2a_3c(self):
     self.c1 = {
         'true_state': 'SUCCESS',
@@ -43,11 +44,11 @@ def set_2a_3c(self):
         ]
     }
 
+
 class TestBeliefMemory(TestCase):
     def setUp(self) -> None:
         self.memory = BeliefMemory({})
         set_2a_3c(self)
-
 
     def test__is_leaf_a_condition(self):
         self.assertEqual(True, self.memory._is_leaf_a_condition(self.c1))
@@ -65,17 +66,17 @@ class TestBeliefMemory(TestCase):
 
         memory = BeliefMemory({'a': 0, 'b': 1})
 
-        res = dict(memory.exec(c1))
-        self.assertTrue('R' not in res and 'S' not in res and 'F' in res)
-        res = dict(memory.exec(a1))
-        self.assertTrue('S' in res and 'R' not in res and 'F' not in res)
-        res = dict(res['S'].exec(c1))
-        self.assertTrue('R' not in res and 'S' in res and 'F' in res)
-        print(dict(res['S'].exec(a2))['S'])
-        res = dict(dict(res['S'].exec(a2))['S'].exec(c3))
-        print(res)
-        self.assertTrue('R' in res)
-        self.assertEqual(0.35, sum(prob for state, prob in res['R'].states))
+        res = memory.exec(c1)
+        self.assertEqual(1, res.prob({res.state_key: 'F'}))
+        res = memory.exec(a1).apply_delayed_actions()
+        self.assertEqual(1, res.prob({res.state_key: 'S'}))
+
+        res = res.exec(c1)
+        self.assertTrue(res.prob({res.state_key: 'S'}) > 0 and res.prob({res.state_key: 'F'}) > 0)
+        res = res.select_whether(lambda s: s[res.state_key] != 'S') + \
+              res.select_whether(lambda s: s[res.state_key] == 'S').exec(self.a2).apply_delayed_actions()
+        P_S = res.exec(self.c2).prob({res.state_key: 'R'})
+        self.assertEqual(0.35, P_S)
 
     def test_or(self):
         mem1 = BeliefMemory({'a': 1, 'b': 2}, 0.5)
@@ -90,4 +91,3 @@ class TestBeliefMemory(TestCase):
         mem5.simplify()
         self.assertEqual(1, len(mem5.states))
         self.assertEqual(0.8, mem5.states[0][1])
-

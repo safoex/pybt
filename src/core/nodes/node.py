@@ -8,6 +8,8 @@ class Node:
         if not no_add:
             self.memory.add({self.state_key(): State.RUNNING})
         self.children = []
+        self._after_tick = None
+        self._before_tick = None
 
     def state_key(self):
         return State.Key(self.id)
@@ -16,19 +18,15 @@ class Node:
         return self.memory.vars[self.state_key()]
 
     def tick(self):
-        self._before_tick()
+        if self._before_tick:
+            self._before_tick(self)
         state = self.evaluate()
         self.memory.set({self.state_key(): state})
-        self._after_tick()
+        if self._after_tick:
+            self._after_tick(self, state)
         return state
 
     def evaluate(self):
-        pass
-
-    def _before_tick(self):
-        pass
-
-    def _after_tick(self):
         pass
 
     def dfs(self, handler):
@@ -37,7 +35,7 @@ class Node:
             return res
         if len(self.children):
             for child in self.children:
-                res = child.dfs(self)
+                res = child.dfs(handler)
                 if res is not None:
                     return res
         else:

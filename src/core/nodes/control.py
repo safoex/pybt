@@ -18,6 +18,7 @@ def ControlNodeInheriter(NodeClass):
             if after is None or not isinstance(after, int):
                 after = -2
                 self.children.insert(after + 1, node)
+                #TODO: WTF ?         ?
             elif isinstance(after, int) and after < 0:
                 after = len(self.children)
             self.children.insert(after, node)

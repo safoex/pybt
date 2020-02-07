@@ -5,29 +5,33 @@ from src.core.nodes.leaf import LeafNodeInheriter
 from src.core.nodes.control import ControlNodeInheriter
 from src.core.nodes.sequential import SequentialInheriter
 from bsagr import BeliefStateSimple as BSS
+import copy
 
 
 class PlanningNode(Node):
+    StateKey = '_S'
+
     def __init__(self, name, memory):
         super().__init__(name, memory, no_add=True)
 
     def tick(self, with_memory=None, starting_from=0):
         if with_memory is None:
             with_memory = self.memory
-        self._before_tick()
+        if self._before_tick:
+            self._before_tick(self)
         buckets = self.evaluate(with_memory, starting_from)
-        self._after_tick()
+        if self._after_tick:
+            self._after_tick(self, buckets)
         return buckets
 
     def evaluate(self, with_memory=None, starting_from=0):
-        return [(State.SUCCESS, BSS({})),
-                (State.FAILURE, BSS({})),
-                (State.RUNNING, BSS({}))]
+        return type(with_memory or self.memory)()
 
 
 class PlanningLeaf(PlanningNode):
     def __init__(self, name, memory, func):
         super().__init__(name, memory)
+        func['id'] = name
         self.func = memory.build(func)
 
     def evaluate(self, with_memory=None, starting_from=0):
@@ -53,26 +57,17 @@ class PlanningSequential(SequentialInheriter(PlanningControlNode)):
 
     def evaluate(self, with_memory=None, starting_from=0):
         memory = with_memory or self.memory
+        if starting_from >= len(self.children) or len(memory.states) == 0:
+            # print(starting_from, '', copy.deepcopy(memory).apply({memory.action_key: []}))
+            return memory
+
         child = self.children[starting_from]
-        res = list(child.tick(memory))
-        buckets = dict(res)
-        if self.skip_state in buckets and starting_from < len(self.children) - 1:
-            nexts = dict(self.tick(buckets[self.skip_state], starting_from + 1))
-            # join buckets
-            prevs = buckets
-            result = {}
-            states = {'S', 'F', 'R'}
-            states.remove(self.skip_state)
-            for state in states:
-                if state in prevs and state in nexts:
-                    result[state] = prevs[state] | nexts[state]
-                elif state in prevs:
-                    result[state] = prevs[state]
-                elif state in nexts:
-                    result[state] = nexts[state]
+        # print('before before', [len(s[memory.action_key]) for s, p in memory.states if memory.action_key in s])
 
-            if self.skip_state in nexts:
-                result[self.skip_state] = nexts[self.skip_state]
-            res = list(result.items())
-
+        res = child.tick(memory)
+        # print('before', [len(s[res.action_key]) for s, p in res.states])
+        skip_states = res.select_whether(lambda s: s[res.state_key] == self.skip_state)
+        ret_states = res.select_whether(lambda s: s[res.state_key] != self.skip_state)
+        res = ret_states + self.tick(skip_states, starting_from + 1)
+        # print('after', [len(s[res.action_key]) for s, p in res.states])
         return res

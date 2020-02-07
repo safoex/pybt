@@ -2,7 +2,7 @@ from src.core.memory.memory import Memory
 from definitions import State
 from src.core.nodes.sequential import Sequential
 from src.core.io.io import Channel, Task
-
+import copy
 
 class BehaviorTree(Channel):
     TICK = 'TICK'
@@ -66,6 +66,11 @@ class BehaviorTree(Channel):
                 parent_node = self.nodes[parent]
                 parent_node.insert(new_node, i)
                 self.nodes[new_node.id] = new_node
+                # now add reqursively children
+                if len(new_node.children) > 0:
+                    def adder(_n):
+                        self.nodes[_n.id] = _n
+                    new_node.dfs(adder)
         elif BehaviorTree.REPLACE in command:
             cmd = command[BehaviorTree.REPLACE]
             for old_node_name, new_node in cmd:
@@ -93,3 +98,31 @@ class BehaviorTree(Channel):
             self.apply_command({BehaviorTree.ERASE: task.message})
 
         return Task(message=self, sender_name=self.name, keywords={'behavior_tree', 'changed'})
+
+    def path_from_root(self, node):
+        stack = []
+        result = []
+        def dfs(n):
+            stack.append(n)
+            if n.id == node.id:
+                nonlocal result
+                result = copy.deepcopy(stack)
+                return True
+            else:
+                for c in n.children:
+                    if dfs(c):
+                        return True
+            stack.pop(-1)
+            return False
+        dfs(self.root)
+        return result
+
+    def find_ncr(self, n1, n2):
+        p1 = self.path_from_root(n1)
+        p2 = self.path_from_root(n2)
+        ncr = self.root.id
+        for i, c1 in enumerate(p1):
+            if i >= len(p2) or c1.id != p2[i]:
+                ncr = p1[i-1]
+                break
+        return ncr

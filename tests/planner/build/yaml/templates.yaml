@@ -1,0 +1,224 @@
+import:
+  - /tests/core/planner/build/python/planning.py
+
+templates:
+  action:
+    args:
+      required: [script]
+      optional:
+        preconditions: []
+        immediate: null
+        postconditions: null
+    make: make_action(preconditions, script, immediate, postconditions)
+    # note! either immediate or postconditions should be set :)
+
+  precondition:
+    args:
+      required: [var]
+      optional:
+        fail_state: FAILURE
+        val: SUCCESS
+        obs: null
+
+    make: make_precondition(var, val, fail_state, obs)
+
+
+## actions
+
+
+  goto:
+    args:
+      required: [location]
+
+    nodes:
+      $name:
+        type: t/action
+        postconditions:
+          - location: $location
+            prob: 0.9
+          - location: ANY
+            prob: 0.1
+        script: move_to($location);
+
+    children: []
+
+  put:
+    args:
+      required: [object, place]
+
+    nodes:
+      $name:
+        type: t/action
+        preconditions:
+          - type: t/grasped
+            object: $object
+          - type: t/close_to_place
+            place: $place
+        postconditions:
+          - grasped: none
+            has[$place][$obj]: S
+            prob: 0.9
+          - grasped: none
+            has[ANY][$obj]: S
+            prob: 0.09
+          - prob: 0.01
+        script: put($object, $place);
+
+    children: []
+
+  grasp:
+    args:
+      required: [object]
+
+    nodes:
+      $name:
+        type: t/action
+        preconditions:
+          - type: t/close_to_object
+            object: $object
+          - type: t/grasped
+            object: none
+        postconditions:
+          - grasped: $object
+            prob: 0.9
+          - prob: 0.1
+
+    children: []
+
+  detect:
+    args:
+      required: [object]
+
+    nodes:
+      $name:
+        type: t/action
+        preconditions:
+          - type: t/luminousity
+        postconditions:
+          - seen[$object]: SUCCESS;
+            prob: 0.5
+          - seen[$object]: FAILURE;
+            prob: 0.5
+        script: seen[$object] = detect($object);
+
+    children: []
+
+  light_on:
+    args:
+      required: [location]
+
+    nodes:
+      $name:
+        type: t/action
+        postconditions:
+          - can_be_seen[$location]: SUCCESS
+            prob: 1
+        script: light_on($location)
+
+    children: []
+
+  measure_distance:
+    args:
+      required: [object]
+
+    nodes:
+      $name:
+        type: t/action
+        preconditions:
+          - type: t/seen
+            what: $object
+        postconditions:
+          - close_to_object[$object]: SUCCESS
+            prob: 0.5
+          - close_to_object[$object]: FAILURE
+            prob: 0.5
+        script: close_to_object[$object] = measure_reachability($object);
+
+    children: []
+
+
+## conditions
+
+  grasped:
+    args:
+      required: [object]
+
+    nodes:
+      $name:
+        type: t/precondition
+        var: grasped
+        val: $object
+
+
+  at:
+    args:
+      required: [location]
+
+    nodes:
+      $name:
+        type: t/precondition
+        var: location
+        val: $location
+
+  close_to_object:
+    args:
+      required: [object]
+
+    nodes:
+      $name:
+        type: t/precondition
+        var: close_to_object[$object]
+        obs:
+          type: t/seen
+          what: $object
+
+  seen:
+    args:
+      required: [what]
+      optional:
+        fail_state: FAILURE
+
+    nodes:
+      $name:
+        type: t/precondition
+        var: seen[$what]
+        fail_state: $fail_state
+        obs:
+          type: t/luminousity
+          var: location
+
+  luminousity:
+    args:
+      required: [location]
+      optional:
+        fail_state: FAILURE
+
+    nodes:
+      $name:
+        type: t/precondition
+        var: luminousity[$location]
+        fail_state: $fail_state
+
+  has:
+    args:
+      required: [object, place]
+
+    nodes:
+      $name:
+        type: t/precondition
+        var: has[$place][$object]
+        obs:
+          type: t/seen
+          what: $place
+
+  close_to_place:
+    args:
+      required: [place]
+
+    nodes:
+      $name:
+        type: t/precondition
+        var: closeness[location][$place]
+
+
+

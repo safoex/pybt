@@ -3,6 +3,7 @@ from src.planner.belief_memory.belief_memory import BeliefMemory
 from src.planner.nodes.planning_node import PlanningSequential,PlanningLeaf
 from tests.planner.memory.test_belief_memory import set_2a_3c
 import copy
+from ruamel import yaml
 
 class TestPlanningNode(TestCase):
     def setUp(self) -> None:
@@ -27,6 +28,7 @@ class TestPlanningNode(TestCase):
             'R': 'b < 0'
         }
         self.a1 = {
+            'id': 'a1',
             'script': 'dafdg = 0',
             'postconditions': [
                 {
@@ -40,6 +42,7 @@ class TestPlanningNode(TestCase):
             ]
         }
         self.a2 = {
+            'id': 'a2',
             'script': 'dafdadsg = 0',
             'postconditions': [
                 {
@@ -56,12 +59,13 @@ class TestPlanningNode(TestCase):
     def test_leaf_nodes(self):
         A1 = PlanningLeaf('a1', self.memory, self.a1)
         C1 = PlanningLeaf('c1', self.memory, self.c1)
+        mem = A1.tick()
+        mem = mem.apply_delayed_actions()
+        A1.tick(with_memory=mem)
 
-        A1.tick()
-        A1.tick()
-        buckets = C1.tick()
-        res = dict(buckets)
-        P_C1 = res['S'].prob()
+        mem = mem.apply_delayed_actions()
+        mem = C1.tick(with_memory=mem)
+        P_C1 = mem.prob({mem.state_key: 'S'})
         self.assertEqual(0.5, P_C1)
 
     def test_sequence_node(self):
@@ -74,15 +78,23 @@ class TestPlanningNode(TestCase):
 
         S1 = PlanningSequential(PlanningSequential.Sequence, 's1', mem)
         S1.children = [A1, C1, A2]
-        res = dict(S1.tick())
-        self.assertEqual(0.5, res['F'].prob())
+        mem = S1.tick()
+        self.assertEqual(1, mem.prob({mem.state_key: 'F'}))
+        mem = mem.apply_delayed_actions()
+        mem = S1.tick(mem)
+        self.assertEqual(0.5, mem.prob({mem.state_key: 'F'}))
 
         S1.children = [A1, C1, A2, C2]
-        res = dict(S1.tick(with_memory=copy.deepcopy(self.memory)))
-        self.assertEqual(0.75, res['F'].prob())
+        mem = copy.deepcopy(self.memory)
+        mem = S1.tick(with_memory=mem)
+        mem = mem.apply_delayed_actions()
+        mem = S1.tick(mem)
+
+        mem = mem.apply_delayed_actions()
+        self.assertEqual(0.5, mem.prob({mem.state_key: 'F'}))
 
     def test_seq_and_fal_node(self):
-        mem = copy.deepcopy(self.memory)
+        mem = BeliefMemory({'a': 0, 'b': 0})
         A1 = PlanningLeaf('a1', mem, self.a1)
         A2 = PlanningLeaf('a2', mem, self.a1)
 
@@ -92,9 +104,12 @@ class TestPlanningNode(TestCase):
         S1 = PlanningSequential(PlanningSequential.Sequence, 's1', mem)
         F1 = PlanningSequential(PlanningSequential.Fallback, 'f1', mem)
 
-        F1.children = [C2, A2]
-        S1.children = [A1, F1, C2]
-        res = dict(S1.tick())
-        self.assertEqual(0.75, res['S'].prob())
-
-
+        F1.children = [C1, A2]
+        S1.children = [F1, C2]
+        res = S1.tick()
+        res = res.apply_delayed_actions()
+        res = S1.tick(res).apply_delayed_actions()
+        res = S1.tick(res).apply_delayed_actions()
+        self.assertEqual(0.75, res.prob({res.state_key: 'S'}))
+    #
+    #
