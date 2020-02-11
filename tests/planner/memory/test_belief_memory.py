@@ -4,20 +4,24 @@ from src.planner.belief_memory.belief_memory import BeliefMemory
 
 def set_2a_3c(self):
     self.c1 = {
+        'id': 'c1',
         'true_state': 'SUCCESS',
         'false_state': 'FAILURE',
         'expression': 'a > 0'
     }
     self.c2 = {
+        'id': 'c2',
         'true_state': 'SUCCESS',
         'false_state': 'R',
         'expression': 'b > 0'
     }
     self.c3 = {
+        'id': 'c3',
         'S': 'b > 1 and a == 0',
         'R': 'b < 0'
     }
     self.a1 = {
+        'id': 'a1',
         'script': 'dafdg = 0',
         'postconditions': [
             {
@@ -31,6 +35,7 @@ def set_2a_3c(self):
         ]
     }
     self.a2 = {
+        'id': 'a2',
         'script': 'dafdadsg = 0',
         'postconditions': [
             {

@@ -19,7 +19,7 @@ class Nodes(GenericBuilder):
         if not isinstance(params, list):
             params = [params]
         for p in params:
-            if p not in node or node[p] is None:
+            if p not in node:
                 raise RuntimeWarning("missing " + p + appendix)
 
     def build_from_yaml(self, yml, _id=None):
@@ -31,7 +31,7 @@ class Nodes(GenericBuilder):
         :param _id: you can provide an id explicitly or modify the one from yaml dictionary
         :return: Action, Condition or Sequential node
         """
-        node = yaml.safe_load(yml)
+        node = self.yaml.load(yml)
         return self.build_from_python(node, _id)
 
     def build_action_from_python(self, node, _id):
@@ -109,7 +109,7 @@ class Nodes(GenericBuilder):
         :return: yaml string with description of this node
         """
         pydict = self.dump_to_python(obj)
-        return yaml.safe_dump(pydict)
+        return self.yaml.dump(pydict)
 
     def req_add_children(self, descriptions, bt, node_name):
         if 'children' in descriptions[node_name]:
@@ -121,7 +121,7 @@ class Nodes(GenericBuilder):
 
     def build_collection(self, descriptions, root_name):
         if isinstance(descriptions, str):
-            descriptions = yaml.safe_load(descriptions)
+            descriptions = self.yaml.load(descriptions)
         elif isinstance(descriptions, list):
             descriptions = {o.id: o for o in descriptions}
 
@@ -135,7 +135,7 @@ class Nodes(GenericBuilder):
     def on_message(self, task):
         nodes = task.message
         if isinstance(task.message, str):
-            nodes = yaml.safe_load(task.message)
+            nodes = self.yaml.load(task.message)
         if not isinstance(nodes, dict):
             raise RuntimeWarning('nodes could be loaded only from dict or yaml string')
 

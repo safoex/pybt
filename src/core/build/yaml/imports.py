@@ -15,7 +15,7 @@ class Import(GenericBuilder):
         :param task: should be a list (or yaml -list)
         :return:
         """
-        message = yaml.load(task.message) if isinstance(task.message, str) else task.message
+        message = self.yaml.load(task.message) if isinstance(task.message, str) else task.message
 
         for sub_order, file in enumerate(message):
             if not isinstance(file, str):

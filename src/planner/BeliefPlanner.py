@@ -9,7 +9,7 @@ import copy
 
 
 class BeliefPlanner:
-    def __init__(self, initial_state, partial_behavior_tree, library: TemplateLibrary,
+    def __init__(self, partial_behavior_tree, library: TemplateLibrary,
                  ticks_limit=100, states_limit=100):
         self.bt_def = None
         if isinstance(partial_behavior_tree, str):
@@ -17,7 +17,7 @@ class BeliefPlanner:
         self.bt_def = partial_behavior_tree
         self.library = library
         self.pbt = self.library.compile_bt_for_planning_from_nodes(self.bt_def)
-        self.ticks_limit =ticks_limit
+        self.ticks_limit = ticks_limit
         self.states_limit = states_limit
         self.permutation_graph = {}
 
@@ -48,11 +48,12 @@ class BeliefPlanner:
 
     def insert_actions(self, parent: str, actions: list):
         children_already = len(self.pbt.nodes[parent].children)
-        planning_bt_query = [(parent, i+children_already, action) for i, (action, _id, _rt_nodes) in enumerate(actions)]
+        planning_bt_query = [(parent, i + children_already, action) for i, (action, _id, _rt_nodes) in
+                             enumerate(actions)]
         rt_nodes_query = [_rt_nodes for _, _, _rt_nodes in actions]
         self.bt_def = functools.reduce(Templates.merger.merge, rt_nodes_query, self.bt_def)
         self.pbt.execute({
-            {PlanningBehaviorTree.INSERT: planning_bt_query}
+            PlanningBehaviorTree.INSERT: planning_bt_query
         })
 
     def resolve_precondition_with_inserting_actions(self, precondition: str, initial_state: BeliefMemory):
@@ -75,9 +76,9 @@ class BeliefPlanner:
 
     def find_lowest_failed_condition(self, status: str, ps: dict, bt: PlanningBehaviorTree):
         conditions = {}
-        for name, node in bt.nodes:
-            if 'var' in node.func:
-                conditions[name] = 0
+        for name, node in bt.nodes.items():
+            if isinstance(node, PlanningLeaf) and 'var' in node.func:
+                conditions[name] = None
         height = 0
         current = [bt.root]
         nexts = []
@@ -89,14 +90,14 @@ class BeliefPlanner:
             height += 1
             current, nexts = nexts, current
             nexts.clear()
-        conditions_array = [(height, left, name) for name, (height, left) in conditions.items()]
+        conditions_array = [(*x, name) for name, x in conditions.items() if x is not None]
         conditions_array.sort()
-        return conditions_array[0][2] if len(conditions_array) > 0 else None
+        return conditions_array[0] if len(conditions_array) > 0 else None
 
     def find_most_popular_failed_condition(self, status: str, mem: BeliefMemory, bt: PlanningBehaviorTree):
         # deepest :status: condition?
         conditions = {}
-        for ps in mem.states:
+        for ps, pr in mem.states:
             res = self.find_lowest_failed_condition(status, ps, bt)
             if res is not None:
                 h, l, name = res
@@ -111,31 +112,31 @@ class BeliefPlanner:
             return None
 
     def find_next_condition_to_resolve(self, initial_state: BeliefMemory, bt: PlanningBehaviorTree):
-        for name, node in bt.nodes:
+        for name, node in bt.nodes.items():
             if isinstance(node, PlanningLeaf) and 'var' in node.func:
                 node._after_tick = BeliefPlanner._set_self_state
 
         mem = copy.deepcopy(initial_state)
-        res = bt.tick(mem)
+        mem = bt.tick(mem)
         stopped = {
             state: self.find_most_popular_failed_condition(state, mem, bt)
-            for state in ['R', 'S']
+            for state in ['R', 'F']
         }
         if stopped['R'] is None:
-            return stopped['S']
-        if stopped['S'] is None:
-            return stopped['R']
+            more_popular_state = 'F'
+        elif stopped['F'] is None:
+            more_popular_state = 'R'
+        else:
+            more_popular_state = 'R' if stopped['R'][0] > stopped['F'][0] else 'F'
 
-        more_popular_state = 'R' if stopped['R'][0] > stopped['S'][1] else 'S'
         condition_to_resolve = stopped[more_popular_state][1]
 
-        for name, node in bt.nodes:
+        for name, node in bt.nodes.items():
             node._after_tick = None
         return condition_to_resolve, more_popular_state
 
     def find_threats(self, cond_name: str, state: BeliefMemory, bt: PlanningBehaviorTree):
         condition = bt.nodes[cond_name].func
-        threats = set()
         for ps in state.states:
             if state.action_history_key in ps:
                 threat = None
@@ -158,7 +159,7 @@ class BeliefPlanner:
         # I bet it should be preconditions. If not, let's raise another error!
 
         threat_path = bt.path_from_root(threat)
-        next_to_threat =  threat_path.index(ncr) + 1
+        next_to_threat = threat_path.index(ncr) + 1
         target_condition_path = bt.path_from_root(target_condition)
         next_to_target = target_condition_path.index(ncr) + 1
 
@@ -169,10 +170,13 @@ class BeliefPlanner:
         self.rearrange_children(ncr, children, bt)
 
     def resolve_open_goal(self, target_condition: str, state: BeliefMemory, bt: PlanningBehaviorTree):
+        print(target_condition)
         parent = bt.find_parent(target_condition)
+        print(parent)
         if bt.nodes[parent].skip_state == PlanningSequential.Sequence:
             parent = bt.find_parent(parent)
-        best_actions = self.library.get_best_templates_for_condition(bt.nodes[target_condition].func,None, state)
+        best_actions = self.library.get_best_templates_for_condition(bt.nodes[target_condition].func, None, state)
+        print(best_actions)
         self.insert_actions(parent, [best_actions[0]])
 
     def resolve_one_issue(self, initial_state: BeliefMemory, bt: PlanningBehaviorTree):
@@ -205,8 +209,8 @@ class BeliefPlanner:
         to_refine = copy.deepcopy(initial_state)
         while total_inserted < nodes_max and last_prob < goal_probability:
             total_inserted += self.resolve_one_issue(copy.deepcopy(initial_state), bt)
-            result = bt.verify(copy.deepcopy(initial_state), ticks_limit=self.ticks_limit, states_limit=self.states_limit)
+            result = bt.verify(copy.deepcopy(initial_state), ticks_limit=self.ticks_limit,
+                               states_limit=self.states_limit)
             finished, to_refine = result.split_by(lambda s: s[result.state_key] == 'S')
             last_prob = finished.prob()
         return last_prob, total_inserted
-    

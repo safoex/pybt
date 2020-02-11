@@ -1,5 +1,5 @@
 import:
-  - /tests/core/planner/build/python/planning.py
+  - /tests/planner/build/python/planning.py
 
 templates:
   action:
@@ -7,8 +7,8 @@ templates:
       required: [script]
       optional:
         preconditions: []
-        immediate: null
-        postconditions: null
+        immediate: None
+        postconditions: None
     make: make_action(preconditions, script, immediate, postconditions)
     # note! either immediate or postconditions should be set :)
 
@@ -16,11 +16,11 @@ templates:
     args:
       required: [var]
       optional:
-        fail_state: FAILURE
+        false_state: FAILURE
         val: SUCCESS
-        obs: null
+        obs: None
 
-    make: make_precondition(var, val, fail_state, obs)
+    make: make_precondition(var, val, false_state, obs)
 
 
 ## actions
@@ -55,11 +55,11 @@ templates:
           - type: t/close_to_place
             place: $place
         postconditions:
-          - grasped: none
-            has[$place][$obj]: S
+          - grasped: None
+            has[$place][$object]: SUCCESS
             prob: 0.9
-          - grasped: none
-            has[ANY][$obj]: S
+          - grasped: None
+            has[ANY][$object]: SUCCESS
             prob: 0.09
           - prob: 0.01
         script: put($object, $place);
@@ -77,11 +77,12 @@ templates:
           - type: t/close_to_object
             object: $object
           - type: t/grasped
-            object: none
+            object: None
         postconditions:
           - grasped: $object
             prob: 0.9
           - prob: 0.1
+        script: grasp($object);
 
     children: []
 
@@ -176,28 +177,28 @@ templates:
     args:
       required: [what]
       optional:
-        fail_state: FAILURE
+        false_state: FAILURE
 
     nodes:
       $name:
         type: t/precondition
         var: seen[$what]
-        fail_state: $fail_state
+        false_state: $false_state
         obs:
           type: t/luminousity
           var: location
 
   luminousity:
     args:
-      required: [location]
       optional:
-        fail_state: FAILURE
+        location: location
+        false_state: FAILURE
 
     nodes:
       $name:
         type: t/precondition
         var: luminousity[$location]
-        fail_state: $fail_state
+        false_state: $false_state
 
   has:
     args:

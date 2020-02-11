@@ -12,10 +12,10 @@ def make_action(preconditions, script, immediate, postconditions):
                 type: skipper
                 children: [~finished, ~seq]
 
-            ~ended:
+            ~finished:
                 type: condition
                 true_state: SUCCESS
-                fail_state: RUNNING
+                false_state: RUNNING
                 expression: ~finished
 
             ~seq:
@@ -25,7 +25,7 @@ def make_action(preconditions, script, immediate, postconditions):
             ~started:
                 type: condition
                 true_state: RUNNING
-                fail_state: FAILURE
+                false_state: SUCCESS
                 expression: ~started
 
             ~action:
@@ -44,24 +44,31 @@ def make_action(preconditions, script, immediate, postconditions):
     """
 
     if preconditions is not None and isinstance(preconditions, list) and len(preconditions) > 0:
+
         preconditions_listing = ""
-        for i, prec in preconditions:
-            prec_id = '~prec_' + i
+        for i, prec in enumerate(preconditions):
+            prec_id = '~prec_' + str(i)
             preconditions_listing += prec_id + ', '
-        yml.replace('__preconditions__', preconditions_listing)
+        yml = yml.replace('__preconditions__,', preconditions_listing)
+
+        pyobj = yaml.safe_load(yml)
+        for pc in postconditions:
+            pc.update({'~finished': 'True'})
+        pyobj['nodes']['~action']['postconditions'] = postconditions
+
+        for i, prec in enumerate(preconditions):
+            prec_id = '~prec_' + str(i)
+            pyobj['nodes'][prec_id] = prec
+    else:
+        yml = yml.replace('__preconditions__,', ' ')
 
         pyobj = yaml.safe_load(yml)
         pyobj['nodes']['~action']['postconditions'] = postconditions
 
-        for i, prec in preconditions:
-            prec_id = '~prec_' + i
-            pyobj['nodes'][prec_id] = prec
-    else:
-        pyobj = yaml.safe_load(yml)
     return pyobj
 
 
-def make_precondition(var, val, fail_state, obs):
+def make_precondition(var, val, false_state, obs):
     yml = """
         nodes:
             $name:
@@ -70,15 +77,15 @@ def make_precondition(var, val, fail_state, obs):
             ~cond:
                 type: condition
                 true_state: SUCCESS
-                fail_state: $fail_state
-                expression: $var == $val
-                var: $var
-                val: $val
+                false_state: $false_state
+                expression: "'$var == $val'"
+                var: "'$var'"
+                val: "'$val'"
     """
-    control_type = "skipper" if fail_state == "RUNNING" else "selector"
-    yml.replace('__control__type__', control_type)
+    control_type = "skipper" if false_state == "RUNNING" else "selector"
+    yml = yml.replace('__control__type__', control_type)
     pyobj = yaml.safe_load(yml)
-    if obs is not None:
+    if obs is not None and obs != 'None':
         pyobj['nodes']['$name']['children'] = ['~prec', '~cond']
         pyobj['nodes']['~prec'] = obs
     return pyobj

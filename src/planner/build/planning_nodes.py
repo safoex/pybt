@@ -9,7 +9,11 @@ class PlanningNodes(Nodes):
 
     def build_action_from_python(self, node, _id):
         self._check_and_raise(node, 'script')
-        self._check_and_raise(node, 'postconditions')
+        try:
+            self._check_and_raise(node, 'postconditions')
+        except RuntimeWarning as rw:
+            self._check_and_raise(node, 'immediate')
+
         return PlanningLeaf(_id, self.memory, copy.copy(node))
 
     def build_condition_from_python(self, node, _id):

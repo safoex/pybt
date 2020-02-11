@@ -4,6 +4,7 @@ from src.core.nodes.sequential import Sequential
 from src.core.io.io import Channel, Task
 import copy
 
+
 class BehaviorTree(Channel):
     TICK = 'TICK'
     ERASE = 'ERASE'
@@ -27,14 +28,11 @@ class BehaviorTree(Channel):
         top down recursive tick propagation from the root node
         :return: None
         """
-        try:
-            return self.root.tick()
-        except BaseException:
-            return State.FAILURE
+        return self.root.tick()
 
     def find_parent(self, node_name):
         def check_for_parent(node):
-            if node_name in node.children:
+            if node_name in [c.id for c in node.children]:
                 return node.id
             else:
                 return None
@@ -70,6 +68,7 @@ class BehaviorTree(Channel):
                 if len(new_node.children) > 0:
                     def adder(_n):
                         self.nodes[_n.id] = _n
+
                     new_node.dfs(adder)
         elif BehaviorTree.REPLACE in command:
             cmd = command[BehaviorTree.REPLACE]
@@ -102,6 +101,7 @@ class BehaviorTree(Channel):
     def path_from_root(self, node):
         stack = []
         result = []
+
         def dfs(n):
             stack.append(n)
             if n.id == node.id:
@@ -114,6 +114,7 @@ class BehaviorTree(Channel):
                         return True
             stack.pop(-1)
             return False
+
         dfs(self.root)
         return result
 
@@ -123,6 +124,6 @@ class BehaviorTree(Channel):
         ncr = self.root.id
         for i, c1 in enumerate(p1):
             if i >= len(p2) or c1.id != p2[i]:
-                ncr = p1[i-1]
+                ncr = p1[i - 1]
                 break
         return ncr

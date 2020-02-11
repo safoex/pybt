@@ -2,6 +2,63 @@ from src.core.io.io import Channel, Task
 from ruamel import yaml
 
 
+def process_scalar(self):
+    if self.analysis is None:
+        self.analysis = self.analyze_scalar(self.event.value)
+    if self.style is None:
+        self.style = self.choose_scalar_style()
+    split = (not self.simple_key_context)
+    # VVVVVVVVVVVVVVVVVVVV added
+    if split:  # not a key
+        is_string = True
+        if self.event.value and self.event.value[0].isdigit():
+            is_string = False
+        # insert extra tests for scalars that should not be ?
+        if is_string:
+            self.style = "'"
+    # ^^^^^^^^^^^^^^^^^^^^
+    # if self.analysis.multiline and split    \
+    #         and (not self.style or self.style in '\'\"'):
+    #     self.write_indent()
+    if self.style == '"':
+        self.write_double_quoted(self.analysis.scalar, split)
+    elif self.style == '\'':
+        self.write_single_quoted(self.analysis.scalar, split)
+    elif self.style == '>':
+        self.write_folded(self.analysis.scalar)
+    elif self.style == '|':
+        self.write_literal(self.analysis.scalar)
+    else:
+        self.write_plain(self.analysis.scalar, split)
+    self.analysis = None
+    self.style = None
+    if self.event.comment:
+        self.write_post_comment(self.event)
+
+
+class YamlFixingQuotesLoader:
+    def __init__(self):
+        self.dd = yaml.RoundTripDumper
+        self.dd.process_scalar = process_scalar
+
+    def load(self, yaml_str):
+        return yaml.load(yaml_str, Loader=yaml.RoundTripLoader)
+
+    def dump(self, py_obj):
+        return yaml.dump(py_obj, Dumper=self.dd)
+
+
+class YamlLoader:
+    def __init__(self):
+        pass
+
+    def load(self, yaml_str):
+        return yaml.safe_load(yaml_str)
+
+    def dump(self, py_obj):
+        return yaml.safe_dump(py_obj)
+
+
 class GenericBuilder(Channel):
     def __init__(self, name, keywords, submodules_order=None):
         """
@@ -12,6 +69,8 @@ class GenericBuilder(Channel):
         """
         super().__init__(name, keywords)
         self.submodules_order = submodules_order or list()
+        # self.yaml = YamlFixingQuotesLoader()
+        self.yaml = YamlLoader()
 
     def on_message(self, task):
         self.build_modules(task)
@@ -19,7 +78,7 @@ class GenericBuilder(Channel):
     def build_modules(self, task):
         msg = task.message
         if not isinstance(task.message, dict):  # and isinstance(task.message, str):
-            msg = yaml.safe_load(task.message)
+            msg = self.yaml.load(task.message)
 
         sub_order = 0
         for submodule in self.submodules_order:

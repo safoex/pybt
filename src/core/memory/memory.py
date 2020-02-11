@@ -61,7 +61,16 @@ class Memory:
         print(yaml.dump({k: self.vars[k] for k in self.service.track}))
 
     @staticmethod
+    def unquote(block):
+        if len(block) > 0:
+            if block[0] == '"' or block[0] == '\'':
+                block = yaml.safe_load(block)
+        return block
+
+    @staticmethod
     def unindent(block, symbol=None):
+        block = Memory.unquote(block)
+
         def symbols_from_beginning(string, _symbol='\t'):
             tabs = 0
             for c in string:

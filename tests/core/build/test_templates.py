@@ -372,71 +372,71 @@ class TestTemplates(TestCase):
         self.assertEqual('Hey! ' + 'some ' + 'test ' + 'actions! (these actions done only once!) ' + 'Hey! ' + 'Hey! ',
                          self.memory.vars['test_str'])
 
-    def test_all_inclusive_plus_import_plus_make(self):
-        all = """
-                import:
-                    - /tests/core/build/imports/funcs_for_import.py
-                    - /tests/core/build/imports/funcs_for_make.py
-
-                vars:
-                    time: 0
-                    Z: 0
-                    
-                nodes:
-                    root:
-                        root: True
-                        type: sequence
-                        children: [A1, A2]
-                        
-                    A1:
-                        type: t/planning_action
-                        preconditions:
-                            -   S: time >= 0
-                            -   R: Z != 0
-                                S: Z > 0
-                        script:
-                            time = 2;
-                            Z = 2;
-                        postconditions:
-                            -   action: Z = 2; time = 2;
-                                prob: 1
-                            
-                    A2:
-                        type: t/planning_action
-                        preconditions:
-                            - S: time > 2
-                        script:
-                            time = 0
-                        postconditions:
-                            -   action: time = 0;
-                                prob: 1
-
-                """
-        tmplt = ""
-        with open('templates.yaml') as tmplt_file:
-            tmplt = tmplt_file.read()
-
-        self.io = IO()
-        self.memories = Memories(self.memory)
-        self.bt = BehaviorTree('behavior_tree', self.memory)
-        self.nodes = Nodes(self.memory)
-        self.importer = Import(self.memory)
-        self.generic = GenericBuilder('builder', {'build'}, ['build', 'import', 'memory', 'templates', 'vars', 'nodes'])
-        self.io.reg(self.memories)
-        self.io.reg(self.bt)
-        self.io.reg(self.nodes)
-        self.io.reg(self.generic)
-        self.io.reg(self.importer)
-        self.io.reg(self.templates)
-        self.io.accept(Task(message=tmplt, keywords={'build'}, sender_name='anonymous'))
-        self.io.accept(Task(message=all, keywords={'build'}, sender_name='anonymous'))
-        self.io.accept(Task(message=BehaviorTree.TICK, keywords={'behavior_tree'}, sender_name='anonymous'))
-        self.io.accept(Task(message={'Z': 1}, keywords={'behavior_tree'}, sender_name='anonymous'))
-        self.io.accept(Task(message=BehaviorTree.TICK, keywords={'behavior_tree'}, sender_name='anonymous'))
-        self.io.accept(Task(message={'Z': 3}, keywords={'behavior_tree'}, sender_name='anonymous'))
-        self.io.accept(Task(message=BehaviorTree.TICK, keywords={'behavior_tree'}, sender_name='anonymous'))
-        self.io.run_all()
-        self.assertEqual(0, self.memory.vars['time'])
+    # def test_all_inclusive_plus_import_plus_make(self):
+    #     all = """
+    #             import:
+    #                 - /tests/core/build/imports/funcs_for_import.py
+    #                 - /tests/core/build/imports/funcs_for_make.py
+    #
+    #             vars:
+    #                 time: 0
+    #                 Z: 0
+    #
+    #             nodes:
+    #                 root:
+    #                     root: True
+    #                     type: sequence
+    #                     children: [A1, A2]
+    #
+    #                 A1:
+    #                     type: t/planning_action
+    #                     preconditions:
+    #                         -   S: time >= 0
+    #                         -   R: Z != 0
+    #                             S: Z > 0
+    #                     script:
+    #                         time = 2;
+    #                         Z = 2;
+    #                     postconditions:
+    #                         -   action: Z = 2; time = 2;
+    #                             prob: 1
+    #
+    #                 A2:
+    #                     type: t/planning_action
+    #                     preconditions:
+    #                         - S: time > 2
+    #                     script:
+    #                         time = 0
+    #                     postconditions:
+    #                         -   action: time = 0;
+    #                             prob: 1
+    #
+    #             """
+    #     tmplt = ""
+    #     with open('templates.yaml') as tmplt_file:
+    #         tmplt = tmplt_file.read()
+    #
+    #     self.io = IO()
+    #     self.memories = Memories(self.memory)
+    #     self.bt = BehaviorTree('behavior_tree', self.memory)
+    #     self.nodes = Nodes(self.memory)
+    #     self.importer = Import(self.memory)
+    #     self.generic = GenericBuilder('builder', {'build'}, ['build', 'import', 'memory', 'templates', 'vars', 'nodes'])
+    #     self.io.reg(self.memories)
+    #     self.io.reg(self.bt)
+    #     self.io.reg(self.nodes)
+    #     self.io.reg(self.generic)
+    #     self.io.reg(self.importer)
+    #     self.io.reg(self.templates)
+    #     self.io.accept(Task(message=tmplt, keywords={'build'}, sender_name='anonymous'))
+    #     self.io.accept(Task(message=all, keywords={'build'}, sender_name='anonymous'))
+    #     self.io.accept(Task(message=BehaviorTree.TICK, keywords={'behavior_tree'}, sender_name='anonymous'))
+    #     self.io.accept(Task(message={'Z': 1}, keywords={'behavior_tree'}, sender_name='anonymous'))
+    #     self.io.accept(Task(message=BehaviorTree.TICK, keywords={'behavior_tree'}, sender_name='anonymous'))
+    #     self.io.accept(Task(message={'Z': 3}, keywords={'behavior_tree'}, sender_name='anonymous'))
+    #     self.io.accept(Task(message=BehaviorTree.TICK, keywords={'behavior_tree'}, sender_name='anonymous'))
+    #     self.io.run_all()
+    #     self.assertEqual(0, self.memory.vars['time'])
 
 
 

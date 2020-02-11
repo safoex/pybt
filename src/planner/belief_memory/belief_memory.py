@@ -32,15 +32,21 @@ class BeliefMemory(BeliefStateSimple):
         return self.builtins
 
     def _eval(self, expression, physical_state):
+        # print(expression)
+        # print(physical_state)
         physical_state['__builtins__'] = self.builtins or self._init_builtins()
-        res = eval(expression, physical_state)
+
+        try:
+            res = eval(Memory.unquote(expression), physical_state)
+        except BaseException:
+            res = False
         self.builtins = physical_state['__builtins__']
         physical_state.pop('__builtins__')
         return res
 
     def _exec(self, script, physical_state):
         physical_state['__builtins__'] = self.builtins or self._init_builtins()
-        exec(script, physical_state)
+        exec(Memory.unquote(script), physical_state)
         self.builtins = physical_state['__builtins__']
         physical_state.pop('__builtins__')
 
@@ -60,11 +66,12 @@ class BeliefMemory(BeliefStateSimple):
             for state in self.state_keywords:
                 if state in leaf:
                     leaf[state] = Memory.unindent(leaf[state])
-        else:
-            for action_kw in self.action_keywords:
-                if action_kw in leaf:
-                    for action_def in leaf[action_kw]:
-                        action_def['action'] = Memory.unindent(action_def['action'])
+        # else:
+        #     for action_kw in self.action_keywords:
+        #         if action_kw in leaf:
+        #             for action_def in leaf[action_kw]:
+        #                 print(action_def)
+        #                 action_def['action'] = Memory.unindent(action_def['action'])
 
         return leaf
 
@@ -88,16 +95,19 @@ class BeliefMemory(BeliefStateSimple):
                     if apply_postconditions:
                         all_states = []
                         for effect in leaf['postconditions']:
-                            prob, code = effect['prob'], effect['action']
+                            prob = effect['prob']
+                            code = copy.deepcopy(effect)
+                            code.pop('prob')
+
                             code_for_func = code
                             if isinstance(code, dict):
-                                code_for_func = sum([k + ' = ' + v + '\n' for k, v in code.items()])
+                                code_for_func = "".join([Memory.unquote(k) + ' = ' + Memory.unquote(v) + "\n" for k, v in code.items()])
 
                             def func(ps):
                                 self._exec(code_for_func, ps)
                                 if self.action_history_key not in ps:
                                     ps[self.action_history_key] = []
-                                ps[self.action_history_key].append((leaf['id'], code_for_func))
+                                ps[self.action_history_key].append((leaf['id'], code))
 
                             bss = type(self)(copy.deepcopy(self.states), prob)
                             bss.apply_function(func)
@@ -147,7 +157,6 @@ class BeliefMemory(BeliefStateSimple):
         bss = copy.deepcopy(bss)
         bss.simplify()
         return bss
-
 
     def bucketize_by(self, key, pop=False):
         res = self.bucketize(lambda s: s[key])

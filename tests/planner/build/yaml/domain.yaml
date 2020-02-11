@@ -3,19 +3,25 @@ types:
   location: [kitchen, postdocroom]
   place: [table1, table2]
 
+constants:
+  closeness:
+    kitchen:
+      table1: SUCCESS
+      table2: SUCCESS
+    postdocroom:
+      table1: FAILURE
+      table2: FAILURE
+  SUCCESS: SUCCESS
+  FAILURE: FAILURE
+  RUNNING: RUNNING
+  ANY: ANY
+
 vars:
   location: postdocroom
   grasped: null
   close_to_object:
     can: RUNNING
     bottle: RUNNING
-  closeness:
-    kitchen:
-      table1: true
-      table2: true
-    postdocroom:
-      table1: false
-      table2: false
   seen:
     can: RUNNING
     bottle: RUNNING
@@ -28,6 +34,9 @@ vars:
     table2:
       can: RUNNING
       bottle: RUNNING
+    ANY:
+      can: RUNNING
+      bottle: RUNNING
   luminousity:
     kitchen: FAILURE
     postdocroom: FAILURE
@@ -35,7 +44,7 @@ vars:
 
 actions:
   t/goto:
-    place: place
+    location: location
   t/put:
     object: object
     place: place
