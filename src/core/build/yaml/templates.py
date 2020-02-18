@@ -3,6 +3,7 @@ from src.core.io.io import Task
 import copy
 import deepmerge
 import functools
+import re
 
 
 class Templates(Nodes):
@@ -100,8 +101,6 @@ class Templates(Nodes):
 
     @staticmethod
     def replace_from(source, rep_table=None):
-        result = ""
-
         if rep_table is None:
             rep_table = dict()
 
@@ -139,7 +138,8 @@ class Templates(Nodes):
                 arg_def = args_py['construct'][arg_name]
                 Templates._check_and_raise(arg_def, 'from', 'in construct for ' + arg_name)
                 arg_name_from = arg_def['from']
-                Templates._check_and_raise(replacements, '$' + arg_name_from, ' as a source for constructing ' + arg_name)
+                Templates._check_and_raise(replacements, '$' + arg_name_from,
+                                           ' as a source for constructing ' + arg_name)
                 source = replacements['$' + arg_name_from]
 
                 replacements['$' + arg_name] = Templates.replace_from(source, arg_def)
@@ -190,6 +190,13 @@ class Templates(Nodes):
     def delayed_compile_templated_node(self, template_py, args):
         pass
 
+    @staticmethod
+    def replace_all_args_in_text_one_shot(replacements, text):
+        rep = dict((re.escape(k), str(v)) for k, v in replacements.items())
+        # Python 3 renamed dict.iteritems to dict.items so use rep.items() for latest versions
+        pattern = re.compile("|".join(rep.keys()))
+        return pattern.sub(lambda m: rep[re.escape(m.group(0))], text)
+
     def compile_templated_node(self, node_description_yaml, id_=None, lazy=False, for_cache=False):
         """
         create a collection of nodes and variable declarations out of node_description
@@ -219,44 +226,49 @@ class Templates(Nodes):
                 'type': node['type'],
                 'id': '$name'
             }
-            for arg_type, args in template_py['args']:
+            for arg_type, args in template_py['args'].items():
                 for a in args:
                     node_desc_template[a] = '$' + a
-            self.cached_templates[type_] = self.yaml.dump(self.compile_templated_node(self.yaml.dump(node_desc_template), for_cache=True))
+            self.cached_templates[type_] = self.yaml.dump(
+                self.compile_templated_node(self.yaml.dump(node_desc_template), for_cache=True))
 
         args = self.get_args_without_self_dependenices(template_py['args'], node)
         replacements = self.get_optional_and_required_arguments(args, node)
 
         replacements = self.add_construct_replacements(replacements, args)
 
-        template_py = self.yaml.load(template)
+        if 'cache' in template_py and type_ in self.cached_templates:
+            template = Templates.replace_all_args_in_text_one_shot(replacements, self.cached_templates[type_])
+            return self.yaml.load(template)
+        else:
+            # template_py = self.yaml.load(template)
 
-        if 'make' in template_py:
-            replaced_args = {k[1:]: v for k, v in replacements.items()}
-            self.apply_build_script(template_py['make'], replaced_args, template_py)
-            template_py = self.yaml.load(self.yaml.dump(template_py).replace('~', '_$name_'))
+            if 'make' in template_py:
+                replaced_args = {k[1:]: v for k, v in replacements.items()}
+                self.apply_build_script(template_py['make'], replaced_args, template_py)
+                template_py = self.yaml.load(self.yaml.dump(template_py).replace('~', '_$name_'))
 
-        template_py = self.unpack_requirsevily(template_py, replacements)
+            template_py = self.unpack_requirsevily(template_py, replacements)
 
-        template_py.pop('args')
+            template_py.pop('args')
 
-        extra_yaml = Templates.cyclicly_replace_args_in_text(replacements, self.yaml.dump(template_py))
+            extra_yaml = Templates.replace_all_args_in_text_one_shot(replacements, self.yaml.dump(template_py))
 
-        extra = self.yaml.load(extra_yaml)
+            extra = self.yaml.load(extra_yaml)
 
-        if 'view' in extra:
-            if 'nodes' in extra and node['id'] in extra['nodes']:
-                extra['nodes'][node['id']]['view'] = extra['view']
-            extra.pop('view')
+            if 'view' in extra:
+                if 'nodes' in extra and node['id'] in extra['nodes']:
+                    extra['nodes'][node['id']]['view'] = extra['view']
+                extra.pop('view')
 
-        if 'children' in extra:
-            if 'nodes' in extra and node['id'] in extra['nodes']:
-                if 'view' not in extra['nodes'][node['id']]:
-                    extra['nodes'][node['id']]['view'] = dict()
-                extra['nodes'][node['id']]['view']['children'] = extra['children']
-            extra.pop('children')
+            if 'children' in extra:
+                if 'nodes' in extra and node['id'] in extra['nodes']:
+                    if 'view' not in extra['nodes'][node['id']]:
+                        extra['nodes'][node['id']]['view'] = dict()
+                    extra['nodes'][node['id']]['view']['children'] = extra['children']
+                extra.pop('children')
 
-        return extra
+            return extra
 
     def compile_all_nodes(self, nodes, lazy=False):
         if isinstance(nodes, str):
@@ -273,7 +285,7 @@ class Templates(Nodes):
                     raise RuntimeWarning('node ' + name + ' does not have a type field!')
                 if node_description['type'][:2] == 't/':
                     replaced.append(self.compile_templated_node(node_description_yaml=self.yaml.dump(node_description),
-                                                                 id_=name, lazy=lazy))
+                                                                id_=name, lazy=lazy))
 
             if len(replaced) == 0:
                 break

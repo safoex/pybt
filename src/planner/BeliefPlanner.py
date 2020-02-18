@@ -172,12 +172,12 @@ class BeliefPlanner:
         children.insert(children.index(next_to_threat), next_to_target)
         self.rearrange_children(ncr, children, bt)
 
-    def resolve_open_goal(self, target_condition: str, state: BeliefMemory, bt: PlanningBehaviorTree):
+    def resolve_open_goal(self, target_condition: str, state: BeliefMemory, bt: PlanningBehaviorTree, status):
         parent = bt.find_parent(target_condition)
-        if bt.nodes[parent].skip_state == PlanningSequential.Sequence:
+        if status == 'F':
             parent = bt.find_parent(parent)
         best_actions = self.library.get_best_templates_for_condition(bt.nodes[target_condition].func, None, state)
-        self.insert_actions(parent, [best_actions[0]], bt)
+        self.insert_actions(bt.nodes[parent].children[1].id, [best_actions[0]], bt)
 
     def resolve_one_issue(self, initial_state: BeliefMemory, bt: PlanningBehaviorTree):
         next_condition = self.find_next_condition_to_resolve(initial_state, bt)
@@ -190,7 +190,7 @@ class BeliefPlanner:
         if threat is not None:
             self.resolve_threat(target, threat, bt)
         else:
-            self.resolve_open_goal(target, substate, bt)
+            self.resolve_open_goal(target, substate, bt, status)
             insert_operations = 1
         return insert_operations
 
@@ -203,7 +203,7 @@ class BeliefPlanner:
         else:
             return
 
-    def refine_till(self, initial_state: BeliefMemory, bt: PlanningBehaviorTree, goal_probability=0.9, nodes_max=100):
+    def refine_till(self, initial_state: BeliefMemory, bt: PlanningBehaviorTree, goal_probability=0.9, nodes_max=10):
         total_inserted = 0
         last_prob = 0
         to_refine = copy.deepcopy(initial_state)

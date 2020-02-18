@@ -10,7 +10,7 @@ templates:
         immediate: None
         postconditions: None
         post_check_condition: None
-    make: make_action(preconditions, script, immediate, postconditions, post_check_condition)
+    make: make_action(preconditions, script, immediate, postconditions)
     # note! either immediate or postconditions should be set :)
 
   precondition:
@@ -26,10 +26,26 @@ templates:
         children: [~fallback, ~gc2]
       ~fallback:
         type: fallback
-        children: [~skipper]
+        children: [~skipper, ~fix_F]
       ~skipper:
         type: skipper
-        children: [~gc1]
+        children: [~gc1, ~fix_R]
+      ~fix_R:
+        type: sequence
+        children: [~dumb1]
+      ~fix_F:
+        type: sequence
+        children: [~dumb2]
+      ~dumb1:
+        type: condition
+        expression: True
+        true_state: SUCCESS
+        false_state: SUCCESS
+      ~dumb2:
+        type: condition
+        expression: True
+        true_state: SUCCESS
+        false_state: SUCCESS
       ~gc1:
         type: condition
         expression: "'$var == $val'"

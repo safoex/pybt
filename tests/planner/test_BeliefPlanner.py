@@ -163,7 +163,7 @@ class TestBeliefPlanner(TestCase):
         for s, p in res.states:
             print(s['_S'], p)
         print(ref_res)
-        self.visualize()
+        # self.visualize()
 
 
 from pycallgraph import PyCallGraph
@@ -196,4 +196,4 @@ def measure_times():
 
 
 if __name__ == "__main__":
-    make_call_graph()
+    measure_times()

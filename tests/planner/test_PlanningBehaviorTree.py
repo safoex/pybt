@@ -56,7 +56,6 @@ class TestPlanningBehaviorTree(TestCase):
                 root: yes
                 object: can
                 place: table2
-                post_check_condition: null
         """
         self.build_tree(nodes)
 
