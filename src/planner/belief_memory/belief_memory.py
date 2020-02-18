@@ -90,39 +90,39 @@ class BeliefMemory(BeliefStateSimple):
             return self.bucketize_with(func, self.state_key)
         else:
             # now support only postconditions
-            for s, p in self.states:
-                if 'postconditions' in leaf:
-                    if apply_postconditions:
-                        all_states = []
-                        for effect in leaf['postconditions']:
-                            prob = effect['prob']
-                            code = copy.deepcopy(effect)
-                            code.pop('prob')
 
-                            code_for_func = code
-                            if isinstance(code, dict):
-                                code_for_func = "".join([Memory.unquote(k) + ' = ' + Memory.unquote(v) + "\n" for k, v in code.items()])
+            if 'postconditions' in leaf and apply_postconditions:
+                all_states = []
+                for effect in leaf['postconditions']:
+                    prob = effect['prob']
+                    code = copy.deepcopy(effect)
+                    code.pop('prob')
 
-                            def func(ps):
-                                self._exec(code_for_func, ps)
-                                if self.action_history_key not in ps:
-                                    ps[self.action_history_key] = []
-                                ps[self.action_history_key].append((leaf['id'], code))
+                    code_for_func = code
+                    if isinstance(code, dict):
+                        code_for_func = "".join([Memory.unquote(k) + ' = ' + Memory.unquote(v) + "\n" for k, v in code.items()])
 
-                            bss = type(self)(copy.deepcopy(self.states), prob)
-                            bss.apply_function(func)
+                    def func(ps):
+                        self._exec(code_for_func, ps)
+                        if self.action_history_key not in ps:
+                            ps[self.action_history_key] = []
+                        ps[self.action_history_key].append((leaf['id'], code))
 
-                            all_states += bss.states
-                        self.states = all_states
-                    else:
+                    bss = type(self)(copy.deepcopy(self.states), prob)
+                    bss.apply_function(func)
+                    all_states += bss.states
+                self.states = all_states
+            else:
+                for s, p in self.states:
+                    if 'postconditions' in leaf:
                         s[self.state_key] = 'S'
                         if self.action_key not in s:
                             s[self.action_key] = [leaf]
                         else:
                             s[self.action_key].append(leaf)
-                else:
-                    s[self.state_key] = 'S'
-                    self._exec(leaf['script'], s)
+                    else:
+                        s[self.state_key] = 'S'
+                        self._exec(leaf['script'], s)
             self.simplify()
             return self
 
@@ -166,6 +166,8 @@ class BeliefMemory(BeliefStateSimple):
             res.apply_function(lambda s: s.pop(key) if key in s else None)
             return res
 
+    def simplify(self):
+        return self
 
 
 

@@ -66,7 +66,7 @@ class TemplateLibrary:
 
         return yaml_def
 
-    def compile_node_for_runtime(self, _type, _args):
+    def compile_node_for_runtime(self, _type, _args, _id=None):
         """
 
         :param _type: type of template
@@ -82,7 +82,7 @@ class TemplateLibrary:
             _nodes = task.message
 
         hook = Hook('hook', {'nodes_for_tree'}, hook_function)
-        _id = self.get_next_uuid(for_planning=False)
+        _id = _id or self.get_next_uuid(for_planning=False)
         self.runtime_io.reg(hook)
         self.runtime_io.accept(Task({'nodes': self.get_yaml_def(_id, _type, _args)}, 'anon', keywords={'build'}))
         self.runtime_io.run_all()
@@ -200,15 +200,25 @@ class TemplateLibrary:
         if 'var' not in condition and 'val' not in condition:
             return []
         condition = copy.deepcopy(condition)
-        for k in condition:
-            condition[k] = Memory.unquote(condition[k])
+        cond_def = condition['recall']
         print(condition)
+        for k in condition:
+            if isinstance(condition[k], str):
+                condition[k] = Memory.unquote(condition[k])
         candidates = self.get_candidate_actions(condition, history, state)
+        print("can", len(candidates))
+        for t, a in candidates:
+            a.update({'post_check_condition': cond_def})
+        # if len(candidates) > 0:
+        #     print(candidates[0])
+        candidates_and_new_ids = [
+            (self.get_next_uuid(), c) for c in candidates
+        ]
         return [
             (
-                self.compile_node_for_planning(self.get_next_uuid(for_planning=True), t, a),
-                *self.compile_node_for_runtime(t, a)
-            ) for t, a in candidates]
+                self.compile_node_for_planning(_id, t, a),
+                *self.compile_node_for_runtime(t, a, _id)
+            ) for _id, (t, a) in candidates_and_new_ids]
 
     def check_if_action_threats_condition(self, action, _condition):
         """

@@ -17,6 +17,9 @@ from src.planner.BeliefPlanner import BeliefPlanner
 from src.planner.library.Library import TemplateLibrary
 import copy
 from src.planner.belief_memory.belief_memory import BeliefMemory
+from src.ui.abtm_bridge import ABTMAppChannel
+import threading
+import time
 
 
 class TestBeliefPlanner(TestCase):
@@ -59,18 +62,23 @@ class TestBeliefPlanner(TestCase):
         self.planning_io.accept(task)
         self.planning_io.run_all()
 
-    def build_tree_example(self):
+    def build_tree_with(self, nodes):
         with open("build/yaml/templates.yaml") as tf:
             self.load_templates(tf.read())
-        self.nodes = """
+        self.nodes = nodes
+        self.build_tree(self.nodes)
+
+    def build_tree_example(self):
+        nodes = """
         nodes:
             root:
                 type: t/put
                 root: yes
                 object: can
                 place: table2
+                post_check_condition: null
         """
-        self.build_tree(self.nodes)
+        self.build_tree_with(nodes)
 
     def get_state(self):
         with open("build/yaml/domain.yaml") as df:
@@ -83,11 +91,109 @@ class TestBeliefPlanner(TestCase):
         state.apply(vars)
         return state
 
-    def test_one_issue(self):
+    def visualize(self):
+        self.viewer = ABTMAppChannel()
+        self.io = IO()
+        self.io.reg(self.viewer)
+        self.viewer_thread = threading.Thread(target=lambda: self.viewer.run())
+        self.viewer_thread.start()
+        self.io.accept(Task(message=self.bpl.bt_def['nodes'], sender_name='anon', keywords={'nodes_for_tree'}))
+        self.io.run_all()
+
+    # def test_one_issue(self):
+    #     self.build_tree_example()
+    #     self.load_lib()
+    #     self.bpl = BeliefPlanner(self.nodes, self.lib)
+    #     initial_state = self.get_state()
+    #     initial_state = self.pbt.tick(initial_state)
+    #     # print(initial_state)
+    #     self.bpl.resolve_one_issue(initial_state, self.pbt)
+    #     initial_state.states[0][0]["close_to_object"]["can"] = "SUCCESS"
+    #     initial_state.states[0][0]["has"]["table2"]["can"] = "FAILURE"
+    #     initial_state.states[0][0]["location"] = "kitchen"
+    #     initial_state.states[0][0]["grasped"] = None
+    #     res = self.pbt.verify(initial_state)
+    #     # self.visualize()
+    #     self.assertEqual(0.8*0.9, res.prob(lambda s: s['has']['table2']['can'] == "SUCCESS"))
+    #
+    # def test_simple_goal(self):
+    #     self.build_tree_example()
+    #     self.load_lib()
+    #     self.bpl = BeliefPlanner(self.nodes, self.lib)
+    #     initial_state = self.get_state()
+    #     initial_state.states[0][0]["close_to_object"]["can"] = "SUCCESS"
+    #     initial_state.states[0][0]["has"]["table2"]["can"] = "FAILURE"
+    #     initial_state.states[0][0]["location"] = "kitchen"
+    #     initial_state.states[0][0]["grasped"] = None
+    #     self.bpl.refine_till(initial_state, self.pbt, 0.7)
+    #
+    #     res = self.pbt.verify(initial_state)
+    #     # for s, p in res.states:
+    #     #     print(s['_S'], p)
+    #     self.assertEqual(0.8*0.9, res.prob(lambda s: s['has']['table2']['can'] == "SUCCESS"))
+    #
+    # def test_two_step_goal(self):
+    #     self.build_tree_example()
+    #     self.load_lib()
+    #     self.bpl = BeliefPlanner(self.nodes, self.lib)
+    #     initial_state = self.get_state()
+    #     initial_state.states[0][0]["close_to_object"]["can"] = "SUCCESS"
+    #     initial_state.states[0][0]["seen"]["can"] = "SUCCESS"
+    #     initial_state.states[0][0]["has"]["table2"]["can"] = "FAILURE"
+    #     initial_state.states[0][0]["location"] = "postdocroom"
+    #     initial_state.states[0][0]["grasped"] = None
+    #     self.bpl.refine_till(initial_state, self.pbt, 0.7)
+    #     res = self.pbt.verify(initial_state)
+    #     for s, p in res.states:
+    #         print(s['_S'], p)
+    #     # self.visualize()
+
+    def test_three_step_goal(self):
         self.build_tree_example()
         self.load_lib()
         self.bpl = BeliefPlanner(self.nodes, self.lib)
         initial_state = self.get_state()
-        initial_state = self.pbt.tick(initial_state)
-        # print(initial_state)
-        print(self.bpl.resolve_one_issue(initial_state, self.pbt))
+        initial_state.states[0][0]["close_to_object"]["can"] = "SUCCESS"
+        initial_state.states[0][0]["seen"]["can"] = "SUCCESS"
+        initial_state.states[0][0]["has"]["table2"]["can"] = "FAILURE"
+        initial_state.states[0][0]["location"] = "postdocroom"
+        initial_state.states[0][0]["grasped"] = None
+        ref_res = self.bpl.refine_till(initial_state, self.pbt, 0.75)
+        res = self.pbt.verify(initial_state)
+        for s, p in res.states:
+            print(s['_S'], p)
+        print(ref_res)
+        self.visualize()
+
+
+from pycallgraph import PyCallGraph
+from pycallgraph.output import GraphvizOutput
+import cProfile, pstats, io
+
+
+def make_call_graph():
+    test = TestBeliefPlanner()
+    test.setUp()
+
+    with PyCallGraph(output=GraphvizOutput()):
+        test.test_three_step_goal()
+
+def measure_times():
+    pr = cProfile.Profile()
+    test = TestBeliefPlanner()
+    test.setUp()
+
+    pr.enable()
+    test.test_three_step_goal()
+
+    # ... do something ...
+    pr.disable()
+    s = io.StringIO()
+    sortby = 'cumulative'
+    ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+    ps.print_stats()
+    print(s.getvalue())
+
+
+if __name__ == "__main__":
+    make_call_graph()

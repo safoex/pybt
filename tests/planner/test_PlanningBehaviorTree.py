@@ -56,6 +56,7 @@ class TestPlanningBehaviorTree(TestCase):
                 root: yes
                 object: can
                 place: table2
+                post_check_condition: null
         """
         self.build_tree(nodes)
 
@@ -113,4 +114,5 @@ class TestPlanningBehaviorTree(TestCase):
 
         res = self.pbt.verify(state)
         self.assertEqual(0.9, res.prob(lambda s: s['has']['table2']['can'] == 'SUCCESS'))
+
 

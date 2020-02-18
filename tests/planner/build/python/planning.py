@@ -1,7 +1,7 @@
 from ruamel import yaml
 
 
-def make_action(preconditions, script, immediate, postconditions):
+def make_action(preconditions, script, immediate, postconditions, post_check_condition):
     yml = """
         var:
             ~started: False
@@ -10,17 +10,23 @@ def make_action(preconditions, script, immediate, postconditions):
         nodes:
             $name:
                 type: skipper
-                children: [~finished, ~seq]
-
+                children: [~on_finish, ~seq]
+            
+            ~on_finish:
+                type: sequence
+                children: [~finished, ~post_check_condition]
+            
             ~finished:
                 type: condition
                 true_state: SUCCESS
                 false_state: RUNNING
                 expression: ~finished
-
+                
+            ~post_check_condition: __post_check_params__
+            
             ~seq:
                 type: sequence
-                children: [~started, __preconditions__, ~action, ~set_started]
+                children: [~started, __preconditions__, ~action, ~set_started, ~running]
 
             ~started:
                 type: condition
@@ -40,6 +46,12 @@ def make_action(preconditions, script, immediate, postconditions):
                 immediate:
                     ~finished: False
                     ~started: True
+                    
+            ~running:
+                type: condition
+                expression: True
+                true_state: RUNNING
+                false_state: RUNNING
 
     """
 
@@ -64,11 +76,16 @@ def make_action(preconditions, script, immediate, postconditions):
 
         pyobj = yaml.safe_load(yml)
         pyobj['nodes']['~action']['postconditions'] = postconditions
-
+    pyobj['nodes']['~post_check_condition'] = post_check_condition if post_check_condition is not None else {
+        'type': 'condition',
+        'true_state': "SUCCESS",
+        'false_state': "FAILURE",
+        'expression': 'True'
+    }
     return pyobj
 
 
-def make_precondition(var, val, false_state, obs):
+def make_precondition(var, val, false_state, obs, recall):
     yml = """
         nodes:
             $name:
@@ -81,10 +98,12 @@ def make_precondition(var, val, false_state, obs):
                 expression: "'$var == $val'"
                 var: "'$var'"
                 val: "'$val'"
+                recall: $recall
     """
     control_type = "skipper" if false_state == "RUNNING" else "selector"
     yml = yml.replace('__control__type__', control_type)
     pyobj = yaml.safe_load(yml)
+    pyobj['nodes']['~cond']['recall'] = recall
     if obs is not None and obs != 'None':
         pyobj['nodes']['$name']['children'] = ['~prec', '~cond']
         pyobj['nodes']['~prec'] = obs

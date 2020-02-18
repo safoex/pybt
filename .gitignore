@@ -1,2 +1,4 @@
 .idea
 .ipynb*
+__pycache__/*
+*.py[cod]

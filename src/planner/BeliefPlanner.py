@@ -46,13 +46,14 @@ class BeliefPlanner:
                     new_order.append(child1)
         self.rearrange_children(parent, new_order, bt)
 
-    def insert_actions(self, parent: str, actions: list):
-        children_already = len(self.pbt.nodes[parent].children)
+    def insert_actions(self, parent: str, actions: list, bt: PlanningBehaviorTree):
+        children_already = len(bt.nodes[parent].children)
         planning_bt_query = [(parent, i + children_already, action) for i, (action, _id, _rt_nodes) in
                              enumerate(actions)]
         rt_nodes_query = [_rt_nodes for _, _, _rt_nodes in actions]
+        self.bt_def['nodes'][parent]['children'] = self.bt_def['nodes'][parent]['children'] + [_id for _, _id, _ in actions]
         self.bt_def = functools.reduce(Templates.merger.merge, rt_nodes_query, self.bt_def)
-        self.pbt.execute({
+        bt.execute({
             PlanningBehaviorTree.INSERT: planning_bt_query
         })
 
@@ -92,7 +93,7 @@ class BeliefPlanner:
             nexts.clear()
         conditions_array = [(*x, name) for name, x in conditions.items() if x is not None]
         conditions_array.sort()
-        return conditions_array[0] if len(conditions_array) > 0 else None
+        return conditions_array[-1] if len(conditions_array) > 0 else None
 
     def find_most_popular_failed_condition(self, status: str, mem: BeliefMemory, bt: PlanningBehaviorTree):
         # deepest :status: condition?
@@ -102,12 +103,14 @@ class BeliefPlanner:
             if res is not None:
                 h, l, name = res
                 if name in conditions:
-                    conditions[name] += 1
+                    conditions[name] += BeliefMemory(ps, pr)
                 else:
-                    conditions[name] = 1
-        results = sorted([(occs, name) for name, occs in conditions.items()])
+                    conditions[name] = BeliefMemory(ps, pr)
+        results = list(reversed(sorted([(occs.prob(), name) for name, occs in conditions.items()])))
+        print(results)
         if len(results) > 0:
-            return results[0]
+            cond =  results[0][1]
+            return conditions[cond], cond
         else:
             return None
 
@@ -127,13 +130,13 @@ class BeliefPlanner:
         elif stopped['F'] is None:
             more_popular_state = 'R'
         else:
-            more_popular_state = 'R' if stopped['R'][0] > stopped['F'][0] else 'F'
+            more_popular_state = 'R' if stopped['R'][0].prob() > stopped['F'][0].prob() else 'F'
 
         condition_to_resolve = stopped[more_popular_state][1]
 
         for name, node in bt.nodes.items():
             node._after_tick = None
-        return condition_to_resolve, more_popular_state
+        return condition_to_resolve, more_popular_state, stopped[more_popular_state][0]
 
     def find_threats(self, cond_name: str, state: BeliefMemory, bt: PlanningBehaviorTree):
         condition = bt.nodes[cond_name].func
@@ -170,31 +173,28 @@ class BeliefPlanner:
         self.rearrange_children(ncr, children, bt)
 
     def resolve_open_goal(self, target_condition: str, state: BeliefMemory, bt: PlanningBehaviorTree):
-        print(target_condition)
         parent = bt.find_parent(target_condition)
-        print(parent)
         if bt.nodes[parent].skip_state == PlanningSequential.Sequence:
             parent = bt.find_parent(parent)
         best_actions = self.library.get_best_templates_for_condition(bt.nodes[target_condition].func, None, state)
-        print(best_actions)
-        self.insert_actions(parent, [best_actions[0]])
+        self.insert_actions(parent, [best_actions[0]], bt)
 
     def resolve_one_issue(self, initial_state: BeliefMemory, bt: PlanningBehaviorTree):
         next_condition = self.find_next_condition_to_resolve(initial_state, bt)
         if next_condition is None:
             return 0
-        target, status = next_condition
-        threat = self.find_threats(target, initial_state, bt)
+        target, status, substate = next_condition
+        print(target)
+        threat = self.find_threats(target, substate, bt)
         insert_operations = 0
         if threat is not None:
             self.resolve_threat(target, threat, bt)
         else:
-            self.resolve_open_goal(target, initial_state, bt)
+            self.resolve_open_goal(target, substate, bt)
             insert_operations = 1
         return insert_operations
 
     def refine_to(self, initial_state, bt: PlanningBehaviorTree, goal_probability=0.9):
-
         result = bt.verify(initial_state, ticks_limit=self.ticks_limit, states_limit=self.states_limit)
         finished, to_refine = result.split_by(lambda s: s[result.state_key] == 'S')
         new_goal = goal_probability - finished.prob()
@@ -208,9 +208,11 @@ class BeliefPlanner:
         last_prob = 0
         to_refine = copy.deepcopy(initial_state)
         while total_inserted < nodes_max and last_prob < goal_probability:
-            total_inserted += self.resolve_one_issue(copy.deepcopy(initial_state), bt)
+            total_inserted += self.resolve_one_issue(to_refine, bt)
             result = bt.verify(copy.deepcopy(initial_state), ticks_limit=self.ticks_limit,
                                states_limit=self.states_limit)
             finished, to_refine = result.split_by(lambda s: s[result.state_key] == 'S')
             last_prob = finished.prob()
+            for s, p in to_refine.states:
+                print(s['_S'], p)
         return last_prob, total_inserted

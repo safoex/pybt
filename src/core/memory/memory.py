@@ -64,7 +64,7 @@ class Memory:
     def unquote(block):
         if len(block) > 0:
             if block[0] == '"' or block[0] == '\'':
-                block = yaml.safe_load(block)
+                block = block[1:-1]
         return block
 
     @staticmethod

@@ -9,18 +9,19 @@ templates:
         preconditions: []
         immediate: None
         postconditions: None
-    make: make_action(preconditions, script, immediate, postconditions)
+        post_check_condition: None
+    make: make_action(preconditions, script, immediate, postconditions, post_check_condition)
     # note! either immediate or postconditions should be set :)
 
   precondition:
     args:
-      required: [var]
+      required: [var, recall]
       optional:
         false_state: FAILURE
         val: SUCCESS
         obs: None
 
-    make: make_precondition(var, val, false_state, obs)
+    make: make_precondition(var, val, false_state, obs, recall)
 
 
 ## actions
@@ -60,6 +61,8 @@ templates:
             prob: 0.9
           - grasped: None
             has[ANY][$object]: SUCCESS
+            close_to_object[$object]: RUNNING
+            seen[$object]: FAILURE
             prob: 0.09
           - prob: 0.01
         script: put($object, $place);
@@ -80,8 +83,8 @@ templates:
             object: None
         postconditions:
           - grasped: $object
-            prob: 0.9
-          - prob: 0.1
+            prob: 0.8
+          - prob: 0.2
         script: grasp($object);
 
     children: []
@@ -149,6 +152,9 @@ templates:
         type: t/precondition
         var: grasped
         val: $object
+        recall:
+          type: t/grasped
+          object: $object
 
 
   at:
@@ -160,6 +166,9 @@ templates:
         type: t/precondition
         var: location
         val: $location
+        recall:
+          type: t/at
+          location: $location
 
   close_to_object:
     args:
@@ -172,6 +181,9 @@ templates:
         obs:
           type: t/seen
           what: $object
+        recall:
+          type: t/close_to_object
+          object: $object
 
   seen:
     args:
@@ -187,6 +199,11 @@ templates:
         obs:
           type: t/luminousity
           var: location
+        recall:
+          type: t/seen
+          what: $what
+          false_state: $false_state
+
 
   luminousity:
     args:
@@ -199,6 +216,11 @@ templates:
         type: t/precondition
         var: luminousity[$location]
         false_state: $false_state
+        recall:
+          type: t/luminousity
+          location: $location
+          false_state: $false_state
+
 
   has:
     args:
@@ -211,6 +233,11 @@ templates:
         obs:
           type: t/seen
           what: $place
+        recall:
+          type: t/has
+          object: $object
+          place: $place
+
 
   close_to_place:
     args:
@@ -220,6 +247,10 @@ templates:
       $name:
         type: t/precondition
         var: closeness[location][$place]
+        recall:
+          type: t/close_to_place
+          place: $place
+
 
 
 

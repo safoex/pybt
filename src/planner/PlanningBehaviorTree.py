@@ -21,5 +21,9 @@ class PlanningBehaviorTree(BehaviorTree):
             results += ended
             ticks_counter += 1
             memory = memory.apply_delayed_actions()
+            # print('put ', memory.prob(lambda s: s['has']['table2']['can'] == "SUCCESS"))
+            # print('grasped ', memory.prob(lambda s: s['grasped'] == "can"))
+            # print('total mem ', memory.prob())
+            # print('total     ', results.prob())
 
         return results
