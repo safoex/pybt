@@ -15,14 +15,36 @@ templates:
 
   precondition:
     args:
-      required: [var, recall]
+      required: [var]
       optional:
         false_state: FAILURE
         val: SUCCESS
-        obs: None
-
-    make: make_precondition(var, val, false_state, obs, recall)
-
+    cache: true
+    nodes:
+      $name:
+        type: sequence
+        children: [~fallback, ~gc2]
+      ~fallback:
+        type: fallback
+        children: [~skipper]
+      ~skipper:
+        type: skipper
+        children: [~gc1]
+      ~gc1:
+        type: condition
+        expression: "'$var == $val'"
+        var: "'$var'"
+        val: "'$val'"
+        true_state: SUCCESS
+        false_state: $false_state
+      ~gc2:
+        type: condition
+        expression: "'$var == $val'"
+        var: "'$var'"
+        val: "'$val'"
+        true_state: SUCCESS
+        false_state: $false_state
+    children: []
 
 ## actions
 
@@ -66,7 +88,7 @@ templates:
             prob: 0.09
           - prob: 0.01
         script: put($object, $place);
-
+    cache: true
     children: []
 
   grasp:

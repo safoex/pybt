@@ -19,6 +19,7 @@ class Templates(Nodes):
         self.name = 'templates'
         self.keywords = {'nodes', 'templates', 'templated_nodes'}
         self.templates = dict()
+        self.cached_templates = dict()
 
     def load_template(self, template_yaml, name=None):
         """
@@ -189,7 +190,7 @@ class Templates(Nodes):
     def delayed_compile_templated_node(self, template_py, args):
         pass
 
-    def compile_templated_node(self, node_description_yaml, id_=None, lazy=False):
+    def compile_templated_node(self, node_description_yaml, id_=None, lazy=False, for_cache=False):
         """
         create a collection of nodes and variable declarations out of node_description
         :param node_description_yaml: yaml dict with description of templated node
@@ -212,6 +213,16 @@ class Templates(Nodes):
         template_py = self.yaml.load(template)
 
         self._check_and_raise(template_py, 'args', 'in template ' + type_)
+
+        if 'cache' in template_py and type_ not in self.cached_templates and not for_cache:
+            node_desc_template = {
+                'type': node['type'],
+                'id': '$name'
+            }
+            for arg_type, args in template_py['args']:
+                for a in args:
+                    node_desc_template[a] = '$' + a
+            self.cached_templates[type_] = self.yaml.dump(self.compile_templated_node(self.yaml.dump(node_desc_template), for_cache=True))
 
         args = self.get_args_without_self_dependenices(template_py['args'], node)
         replacements = self.get_optional_and_required_arguments(args, node)
