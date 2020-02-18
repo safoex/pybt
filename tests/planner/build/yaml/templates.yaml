@@ -78,7 +78,7 @@ templates:
           - location: ANY
             prob: 0.1
         script: move_to($location);
-
+    cache: true
     children: []
 
   put:
@@ -124,7 +124,7 @@ templates:
             prob: 0.8
           - prob: 0.2
         script: grasp($object);
-
+    cache: true
     children: []
 
   detect:
@@ -136,13 +136,16 @@ templates:
         type: t/action
         preconditions:
           - type: t/luminousity
+          - type: t/seen
+            object: $object
+            val: RUNNING
         postconditions:
           - seen[$object]: SUCCESS;
             prob: 0.5
           - seen[$object]: FAILURE;
             prob: 0.5
         script: seen[$object] = detect($object);
-
+    cache: true
     children: []
 
   light_on:
@@ -156,7 +159,7 @@ templates:
           - can_be_seen[$location]: SUCCESS
             prob: 1
         script: light_on($location)
-
+    cache: true
     children: []
 
   measure_distance:
@@ -169,13 +172,17 @@ templates:
         preconditions:
           - type: t/seen
             what: $object
+          - type: t/close_to_object
+            object: $object
+            val: RUNNING
+
         postconditions:
           - close_to_object[$object]: SUCCESS
             prob: 0.5
           - close_to_object[$object]: FAILURE
             prob: 0.5
         script: close_to_object[$object] = measure_reachability($object);
-
+    cache: true
     children: []
 
 
@@ -190,10 +197,7 @@ templates:
         type: t/precondition
         var: grasped
         val: $object
-        recall:
-          type: t/grasped
-          object: $object
-
+    cache: true
 
   at:
     args:
@@ -204,44 +208,35 @@ templates:
         type: t/precondition
         var: location
         val: $location
-        recall:
-          type: t/at
-          location: $location
+    cache: true
 
   close_to_object:
     args:
       required: [object]
+      optional:
+        val: SUCCESS
 
     nodes:
       $name:
         type: t/precondition
         var: close_to_object[$object]
-        obs:
-          type: t/seen
-          what: $object
-        recall:
-          type: t/close_to_object
-          object: $object
+        val: $val
+    cache: true
 
   seen:
     args:
       required: [what]
       optional:
         false_state: FAILURE
+        val: SUCCESS
 
     nodes:
       $name:
         type: t/precondition
         var: seen[$what]
+        val: $val
         false_state: $false_state
-        obs:
-          type: t/luminousity
-          var: location
-        recall:
-          type: t/seen
-          what: $what
-          false_state: $false_state
-
+    cache: true
 
   luminousity:
     args:
@@ -254,28 +249,21 @@ templates:
         type: t/precondition
         var: luminousity[$location]
         false_state: $false_state
-        recall:
-          type: t/luminousity
-          location: $location
-          false_state: $false_state
-
+        val: $val
+    cache: true
 
   has:
     args:
       required: [object, place]
+      optional:
+        val: SUCCESS
 
     nodes:
       $name:
         type: t/precondition
         var: has[$place][$object]
-        obs:
-          type: t/seen
-          what: $place
-        recall:
-          type: t/has
-          object: $object
-          place: $place
-
+        val: $val
+    cache: true
 
   close_to_place:
     args:
@@ -285,10 +273,7 @@ templates:
       $name:
         type: t/precondition
         var: closeness[location][$place]
-        recall:
-          type: t/close_to_place
-          place: $place
-
+    cache: true
 
 
 
