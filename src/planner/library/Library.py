@@ -22,6 +22,8 @@ class TemplateLibrary:
         self.belief_memory = BeliefMemory({})
         self.memory = Memory()
         self.postconditions = {}
+        self.observ_action_postconditions = {}
+        self.normal_action_postconditions = {}
         self.vars = {}
         self.constants = {}
 
@@ -101,12 +103,14 @@ class TemplateLibrary:
         self.runtime_io.accept(task2)
         self.runtime_io.run_all()
 
-    def add_effect(self, var, val, prob, action):
-        if var not in self.postconditions:
-            self.postconditions[var] = {}
-        if val not in self.postconditions[var]:
-            self.postconditions[var][val] = []
-        self.postconditions[var][val].append((prob, action))
+    def add_effect(self, var, val, prob, action, to=None):
+        if to is None:
+            to = self.postconditions
+        if var not in to:
+            to[var] = {}
+        if val not in to[var]:
+            to[var][val] = []
+        to[var][val].append((prob, action))
 
     def load_domain(self, domain_file):
         domain = yaml.safe_load(domain_file)
@@ -120,12 +124,30 @@ class TemplateLibrary:
                 node = yaml.safe_dump(d)
                 instance = self.planning_templates.compile_templated_node(node, "id")
                 # print(instance)
+                to = self.postconditions
+                if 'preconditions' in instance['nodes']['id']:
+                    for prec in instance['nodes']['id']['preconditions']:
+                        if 'val' in prec:
+                            if prec['val'] in ['RUNNING', 'UNOBSERVED']:
+                                to = self.observ_action_postconditions
+                                break
+                            elif prec['val'] == 'FAILURE':
+                                to = self.normal_action_postconditions
+                                break
+
                 for postcondition in instance['nodes']['id']['postconditions']:
                     prob = postcondition['prob']
                     postcondition.pop('prob')
-                    for var, val in postcondition.items():
-                        self.add_effect(var, val, prob, (template, d))
 
+                    for var, val in postcondition.items():
+                        self.add_effect(var, val, prob, (template, d), to)
+        
+        # print('----- postconditions lib -----')
+        # for var, vals in self.postconditions.items():
+        #     for val, actions in vals.items():
+        #         for a in actions:
+        #             print((var, val, a))
+        # print('-----                    -----')
         self.vars = domain['vars']
         self.constants = domain['constants']
         for _, ol in types.items():
@@ -171,7 +193,15 @@ class TemplateLibrary:
     def get_candidate_actions(self, condition, history, state):
         candidates = []
         val = condition['val']
-        for pvar, pvals in self.postconditions.items():
+        if condition['id'][-2:] == 'FV':
+            # unobserved case
+            action_set = self.observ_action_postconditions
+        elif condition['id'][-2:] == 'SV':
+            action_set = self.normal_action_postconditions
+        else:
+            action_set = self.postconditions
+
+        for pvar, pvals in action_set.items():
             for pval, possible_actions in pvals.items():
                 for (prob, (template, args)) in possible_actions:
                     # TRICK!
@@ -185,6 +215,8 @@ class TemplateLibrary:
                     prob_on_state = state.prob({state.state_key: 'S'})
                     if prob_on_state > 0:
                         candidates.append((prob_on_state * prob, (template, args)))
+                    else:
+                        print(template, args)
         candidates.sort(key=lambda c: c[0])
         return [(t, a) for c, (t, a) in candidates]
 
@@ -206,11 +238,11 @@ class TemplateLibrary:
             if isinstance(condition[k], str):
                 condition[k] = Memory.unquote(condition[k])
         candidates = self.get_candidate_actions(condition, history, state)
-        print("can", len(candidates))
+        print("canditates ", len(candidates))
         # for t, a in candidates:
         #     a.update({'post_check_condition': cond_def})
-        # if len(candidates) > 0:
-        #     print(candidates[0])
+        if len(candidates) > 0:
+            print(candidates[0])
         candidates_and_new_ids = [
             (self.get_next_uuid(), c) for c in candidates
         ]

@@ -25,5 +25,5 @@ class PlanningBehaviorTree(BehaviorTree):
             # print('grasped ', memory.prob(lambda s: s['grasped'] == "can"))
             # print('total mem ', memory.prob())
             # print('total     ', results.prob())
-        print("ticks total ", ticks_counter)
+        print("ticks total ", ticks_counter, ', states total ', len(results.states))
         return results

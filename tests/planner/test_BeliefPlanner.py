@@ -80,6 +80,18 @@ class TestBeliefPlanner(TestCase):
         """
         self.build_tree_with(nodes)
 
+    def build_tree_example2(self):
+        nodes = """
+        nodes:
+            root:
+                type: t/grasp
+                root: yes
+                object: bottle
+                post_check_condition: null
+        """
+        self.build_tree_with(nodes)
+
+
     def get_state(self):
         with open("build/yaml/domain.yaml") as df:
             yaml_domain = yaml.safe_load(df)
@@ -148,7 +160,7 @@ class TestBeliefPlanner(TestCase):
     #         print(s['_S'], p)
     #     # self.visualize()
 
-    def test_three_step_goal(self):
+    def test_three_step_goal(self, prob=0.75, nodes_limit=20):
         self.build_tree_example()
         self.load_lib()
         self.bpl = BeliefPlanner(self.nodes, self.lib)
@@ -158,12 +170,25 @@ class TestBeliefPlanner(TestCase):
         initial_state.states[0][0]["has"]["table2"]["can"] = "FAILURE"
         initial_state.states[0][0]["location"] = "postdocroom"
         initial_state.states[0][0]["grasped"] = None
-        ref_res = self.bpl.refine_till(initial_state, self.pbt, 0.75)
+        ref_res = self.bpl.refine_till(initial_state, self.pbt, prob, nodes_max=nodes_limit)
         res = self.pbt.verify(initial_state)
         for s, p in res.states:
             print(s['_S'], p)
         print(ref_res)
         # self.visualize()
+
+    def test_big_goal(self, prob=0.9, nodes_limit=20):
+        self.build_tree_example2()
+        self.load_lib()
+        self.bpl = BeliefPlanner(self.nodes, self.lib)
+        initial_state = self.get_state()
+        ref_res = self.bpl.refine_till(initial_state, self.pbt, prob, nodes_max=nodes_limit)
+
+        res = self.pbt.verify(initial_state)
+        for s, p in res.states:
+            print(s['_S'], p)
+        print(ref_res)
+        self.visualize()
 
 
 from pycallgraph import PyCallGraph
@@ -184,7 +209,7 @@ def measure_times():
     test.setUp()
 
     pr.enable()
-    test.test_three_step_goal()
+    test.test_three_step_goal(prob=0.995)
 
     # ... do something ...
     pr.disable()

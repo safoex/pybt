@@ -260,6 +260,8 @@ class Templates(Nodes):
                 if 'nodes' in extra and node['id'] in extra['nodes']:
                     extra['nodes'][node['id']]['view'] = extra['view']
                 extra.pop('view')
+            if 'view' in extra['nodes'][node['id']]:
+                extra['nodes'][node['id']]['view']['t'] = type_
 
             if 'children' in extra:
                 if 'nodes' in extra and node['id'] in extra['nodes']:

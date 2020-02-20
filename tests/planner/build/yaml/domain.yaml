@@ -1,6 +1,6 @@
 types:
   object: [can, bottle]
-  location: [kitchen, postdocroom]
+  location: [kitchen, postdocroom, location]
   place: [table1, table2]
 
 constants:
@@ -51,4 +51,15 @@ actions:
   t/grasp:
     object: object
   t/detect:
+    object: object
+  t/detect_on:
+    object: object
+    place: place
+  t/find:
+    object: object
+  t/light_on:
+    location: location
+  t/move_closer:
+    object: object
+  t/measure_distance:
     object: object

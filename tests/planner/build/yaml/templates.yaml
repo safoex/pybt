@@ -10,8 +10,37 @@ templates:
         immediate: None
         postconditions: None
         post_check_condition: None
+    view_exclude: [children, preconditions, immediate, postconditions, post_check_conditions]
     make: make_action(preconditions, script, immediate, postconditions)
     # note! either immediate or postconditions should be set :)
+
+  var_condition:
+    args:
+      required: [var]
+      view_exclude: [children]
+
+    nodes:
+      $name:
+        type: skipper
+        children: [~SV, ~FV]
+
+      ~SV:
+        type: condition
+        true_state: SUCCESS
+        false_state: RUNNING
+        expression: $var == SUCCESS
+        var: $var
+        val: SUCCESS
+
+      ~FV:
+        type: condition
+        true_state: FAILURE
+        false_state: RUNNING
+        expression: $var == FAILURE
+        var: $var
+        val: SUCCESS
+    children: [~SV, ~FV]
+
 
   precondition:
     args:
@@ -19,11 +48,16 @@ templates:
       optional:
         false_state: FAILURE
         val: SUCCESS
+        cond_type: condition
+      view_exclude: [children, cond_type]
     cache: true
     nodes:
       $name:
         type: sequence
         children: [~fallback, ~gc2]
+        view:
+          expression: $var == $val
+          on_F: $false_state
       ~fallback:
         type: fallback
         children: [~skipper, ~fix_F]
@@ -47,23 +81,109 @@ templates:
         true_state: SUCCESS
         false_state: SUCCESS
       ~gc1:
-        type: condition
-        expression: "'$var == $val'"
-        var: "'$var'"
-        val: "'$val'"
+        type: $cond_type
+        expression: $var == $val
+        var: $var
+        val: $val
         true_state: SUCCESS
         false_state: $false_state
       ~gc2:
-        type: condition
-        expression: "'$var == $val'"
-        var: "'$var'"
-        val: "'$val'"
+        type: $cond_type
+        expression: $var == $val
+        var: $var
+        val: $val
         true_state: SUCCESS
         false_state: $false_state
-    children: []
+    children: [~gc1, ~fix_R, ~fix_F]
 
 ## actions
 
+  find_in:
+    args:
+      required: [object, places]
+      construct:
+        _children_places:
+          from: places
+          V: ~$V_resolve
+      view_exclude: [children]
+    nodes:
+      $name:
+        type: sequence
+        children: $_children_places
+        view:
+          object: $object
+
+
+    unpack:
+      places:
+        nodes:
+          ~$V_resolve:
+            type: fallback
+            children: [~$V_if_seen, ~$V_go_and_detect]
+
+          ~$V_go_and_detect:
+            type: sequence
+            children: [~$V_force_goto, ~$V_detect]
+
+          ~$V_if_seen:
+            type: t/seen
+            what: $object
+            cont_type: condition
+            val: RUNNING
+
+          ~$V_force_goto:
+            type: t/close_to_place
+            place: $V
+
+          ~$V_detect:
+            type: t/detect
+            object: $object
+            seen_prec: FAILURE
+
+    children: []
+  find:
+    args:
+      required: [object]
+
+    nodes:
+      $name:
+        type: t/find_in
+        object: $object
+        places: [table1, table2]
+        preconditions:
+          - type: t/seen
+            what: $object
+            val: FAILURE
+            cond_type: condition
+        postconditions:
+          - seen[$object]: SUCCESS
+            prob: 0.9
+          - seen[$object]: FAILURE
+            prob: 0.1
+
+
+
+  detect_on:
+    args:
+      required: [object, place]
+
+    nodes:
+      $name:
+        type: t/action
+        preconditions:
+          - type: t/close_to_place
+            place: $place
+          - type: t/has
+            place: $place
+            object: $object
+            val: RUNNING
+            cond_type: condition
+        postconditions:
+          - has[$place][$object]: SUCCESS
+            prob: 0.5
+          - has[$place][$object]: FAILURE
+            prob: 0.5
+        script: detect($object);
 
   goto:
     args:
@@ -78,6 +198,28 @@ templates:
           - location: ANY
             prob: 0.1
         script: move_to($location);
+    cache: true
+    children: []
+
+  move_closer:
+    args:
+      required: [object]
+
+    nodes:
+      $name:
+        type: t/action
+        preconditions:
+          - type: t/close_to_object
+            object: $object
+            val: FAILURE
+            cond_type: condition
+          - type: t/seen
+            what: $object
+        postconditions:
+          - close_to_object[$object]: SUCCESS
+            prob: 0.9
+          - prob: 0.1
+        script: move_closer($object);
     cache: true
     children: []
 
@@ -130,6 +272,8 @@ templates:
   detect:
     args:
       required: [object]
+      optional:
+        seen_prec: RUNNING
 
     nodes:
       $name:
@@ -137,12 +281,13 @@ templates:
         preconditions:
           - type: t/luminousity
           - type: t/seen
-            object: $object
-            val: RUNNING
+            what: $object
+            val: $seen_prec
+            cond_type: condition
         postconditions:
-          - seen[$object]: SUCCESS;
+          - seen[$object]: SUCCESS
             prob: 0.5
-          - seen[$object]: FAILURE;
+          - seen[$object]: FAILURE
             prob: 0.5
         script: seen[$object] = detect($object);
     cache: true
@@ -156,7 +301,7 @@ templates:
       $name:
         type: t/action
         postconditions:
-          - can_be_seen[$location]: SUCCESS
+          - luminousity[$location]: SUCCESS
             prob: 1
         script: light_on($location)
     cache: true
@@ -175,6 +320,7 @@ templates:
           - type: t/close_to_object
             object: $object
             val: RUNNING
+            cond_type: condition
 
         postconditions:
           - close_to_object[$object]: SUCCESS
@@ -191,7 +337,7 @@ templates:
   grasped:
     args:
       required: [object]
-
+      view_exclude: [children]
     nodes:
       $name:
         type: t/precondition
@@ -202,7 +348,7 @@ templates:
   at:
     args:
       required: [location]
-
+      view_exclude: [children]
     nodes:
       $name:
         type: t/precondition
@@ -215,12 +361,14 @@ templates:
       required: [object]
       optional:
         val: SUCCESS
-
+        cond_type: t/var_condition
+      view_exclude: [children]
     nodes:
       $name:
         type: t/precondition
         var: close_to_object[$object]
         val: $val
+        cond_type: $cond_type
     cache: true
 
   seen:
@@ -229,13 +377,15 @@ templates:
       optional:
         false_state: FAILURE
         val: SUCCESS
-
+        cond_type: t/var_condition
+      view_exclude: [children]
     nodes:
       $name:
         type: t/precondition
         var: seen[$what]
         val: $val
         false_state: $false_state
+        cond_type: $cond_type
     cache: true
 
   luminousity:
@@ -243,13 +393,12 @@ templates:
       optional:
         location: location
         false_state: FAILURE
-
+      view_exclude: [children]
     nodes:
       $name:
         type: t/precondition
         var: luminousity[$location]
         false_state: $false_state
-        val: $val
     cache: true
 
   has:
@@ -257,18 +406,20 @@ templates:
       required: [object, place]
       optional:
         val: SUCCESS
-
+        cond_type: t/var_condition
+      view_exclude: [children]
     nodes:
       $name:
         type: t/precondition
         var: has[$place][$object]
         val: $val
+        cond_type: $cond_type
     cache: true
 
   close_to_place:
     args:
       required: [place]
-
+      view_exclude: [children]
     nodes:
       $name:
         type: t/precondition

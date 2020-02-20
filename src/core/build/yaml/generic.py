@@ -1,5 +1,7 @@
 from src.core.io.io import Channel, Task
 from ruamel import yaml
+from ruamel.yaml import YAML
+from ruamel.yaml.compat import StringIO
 
 
 def process_scalar(self):
@@ -50,13 +52,17 @@ class YamlFixingQuotesLoader:
 
 class YamlLoader:
     def __init__(self):
-        pass
+        self.yaml2 = YAML()
+        self.yaml2.indent(mapping=2, sequence=2, offset=0)
+
 
     def load(self, yaml_str):
         return yaml.safe_load(yaml_str)
 
     def dump(self, py_obj):
-        return yaml.safe_dump(py_obj)
+        stream = StringIO()
+        self.yaml2.dump(py_obj, stream)
+        return stream.getvalue()
 
 
 class GenericBuilder(Channel):
