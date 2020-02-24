@@ -178,7 +178,7 @@ class TestBeliefPlanner(TestCase):
         # self.visualize()
 
     def test_big_goal(self, prob=0.9, nodes_limit=20):
-        self.build_tree_example2()
+        self.build_tree_example()
         self.load_lib()
         self.bpl = BeliefPlanner(self.nodes, self.lib)
         initial_state = self.get_state()
