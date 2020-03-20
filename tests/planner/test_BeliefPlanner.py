@@ -20,6 +20,8 @@ from src.planner.belief_memory.belief_memory import BeliefMemory
 from src.ui.abtm_bridge import ABTMAppChannel
 import threading
 import time
+import pickle
+from definitions import State
 
 
 class TestBeliefPlanner(TestCase):
@@ -74,7 +76,7 @@ class TestBeliefPlanner(TestCase):
             root:
                 type: t/put
                 root: yes
-                object: can
+                object: soda
                 place: table2
                 post_check_condition: null
         """
@@ -84,10 +86,20 @@ class TestBeliefPlanner(TestCase):
         nodes = """
         nodes:
             root:
-                type: t/grasp
+                type: t/seen
                 root: yes
-                object: bottle
+                what: soda
                 post_check_condition: null
+        """
+        self.build_tree_with(nodes)
+
+    def build_tree_example3(self):
+        nodes = """
+        nodes:
+            root:
+                type: t/nowhere
+                root: yes
+                object: virus
         """
         self.build_tree_with(nodes)
 
@@ -102,6 +114,16 @@ class TestBeliefPlanner(TestCase):
             vars.update({o: o for o in t})
         state.apply(vars)
         return state
+
+    def get_physical_state(self):
+        with open("build/yaml/domain.yaml") as df:
+            yaml_domain = yaml.safe_load(df)
+        mem = Memory()
+        mem.vars.update(yaml_domain['vars'])
+        mem.vars.update(yaml_domain['constants'])
+        for _, t in yaml_domain['types'].items():
+            mem.vars.update({o: o for o in t})
+        return mem
 
     def visualize(self):
         self.viewer = ABTMAppChannel()
@@ -160,35 +182,135 @@ class TestBeliefPlanner(TestCase):
     #         print(s['_S'], p)
     #     # self.visualize()
 
-    def test_three_step_goal(self, prob=0.75, nodes_limit=20):
-        self.build_tree_example()
-        self.load_lib()
-        self.bpl = BeliefPlanner(self.nodes, self.lib)
-        initial_state = self.get_state()
-        initial_state.states[0][0]["close_to_object"]["can"] = "SUCCESS"
-        initial_state.states[0][0]["seen"]["can"] = "SUCCESS"
-        initial_state.states[0][0]["has"]["table2"]["can"] = "FAILURE"
-        initial_state.states[0][0]["location"] = "postdocroom"
-        initial_state.states[0][0]["grasped"] = None
-        ref_res = self.bpl.refine_till(initial_state, self.pbt, prob, nodes_max=nodes_limit)
-        res = self.pbt.verify(initial_state)
-        for s, p in res.states:
-            print(s['_S'], p)
-        print(ref_res)
-        # self.visualize()
+    # def test_three_step_goal(self, prob=0.75, nodes_limit=20):
+    #     self.build_tree_example()
+    #     self.load_lib()
+    #     self.bpl = BeliefPlanner(self.nodes, self.lib)
+    #     initial_state = self.get_state()
+    #     initial_state.states[0][0]["close_to_object"]["can"] = "SUCCESS"
+    #     initial_state.states[0][0]["seen"]["can"] = "SUCCESS"
+    #     initial_state.states[0][0]["has"]["table2"]["can"] = "FAILURE"
+    #     initial_state.states[0][0]["location"] = "postdocroom"
+    #     initial_state.states[0][0]["grasped"] = None
+    #     ref_res = self.bpl.refine_till(initial_state, self.pbt, prob, nodes_max=nodes_limit)
+    #     res = self.pbt.verify(initial_state)
+    #     for s, p in res.states:
+    #         print(s['_S'], p)
+    #     print(ref_res)
+    #     # self.visualize()
+    #
+    # def test_big_goal(self, prob=0.9, nodes_limit=20):
+    #     self.build_tree_example()
+    #     self.load_lib()
+    #     self.bpl = BeliefPlanner(self.nodes, self.lib)
+    #     initial_state = self.get_state()
+    #     ref_res = self.bpl.refine_till(initial_state, self.pbt, prob, nodes_max=nodes_limit)
+    #
+    #     res = self.pbt.verify(initial_state)
+    #     for s, p in res.states:
+    #         print(s['_S'], p)
+    #     print(ref_res)
+    #     self.visualize()
 
-    def test_big_goal(self, prob=0.9, nodes_limit=20):
-        self.build_tree_example()
-        self.load_lib()
-        self.bpl = BeliefPlanner(self.nodes, self.lib)
-        initial_state = self.get_state()
-        ref_res = self.bpl.refine_till(initial_state, self.pbt, prob, nodes_max=nodes_limit)
+    # def test_big_goal_save(self, prob=0.93, nodes_limit=30):
+    #     self.build_tree_example3()
+    #     self.load_lib()
+    #     self.bpl = BeliefPlanner(self.nodes, self.lib)
+    #     initial_state = self.get_state()
+    #     # try:
+    #     ref_res = self.bpl.refine_till(initial_state, self.pbt, prob, nodes_max=nodes_limit)
+    #     res = self.pbt.verify(initial_state)
+    #
+    #     pickle.dump(self.bpl.bt_def, open('saved_nodes_nowhere.nds', 'wb'))
+    #     # except BaseException:
+    #     #     pass
+    #     # yaml.dump(self.bpl.bt_def, open('saved_nodes_find.yaml', 'w'))
+    #     self.visualize()
 
-        res = self.pbt.verify(initial_state)
-        for s, p in res.states:
-            print(s['_S'], p)
-        print(ref_res)
-        self.visualize()
+    def test_load_and_run(self, prob=0.9, nodes_limit=20):
+        loaded_bt = pickle.load(open('saved_nodes_nowhere.nds', 'rb'))
+        loaded_bt['nodes']['_yarp'] = {
+            'type' : 'action',
+            'script': '_yarp_routine()',
+        }
+        loaded_bt['nodes']['_yarp_seq'] = {
+            'type': 'sequence',
+            'children': ['_yarp', 'root'],
+            'root': True
+        }
+        print(loaded_bt['nodes']['root']['children'])
+        loaded_bt['nodes']['root'].pop('root')
+        self.memory = self.get_physical_state()
+
+        for name, node in loaded_bt['nodes'].items():
+            if 'expression' in node and isinstance(node['expression'], str):
+                if len(node['expression']) > 7 and node['expression'][-7:] in ['inished', 'started']:
+                    self.memory.vars.update({node['expression']: False})
+
+        with open("../../src/yarp/simple_vision_and_nav.py") as yarp_f:
+            self.memory.exec(yarp_f.read())
+
+        self.viewer = ABTMAppChannel()
+        self.io = IO()
+        self.io.reg(self.viewer)
+        self.viewer_thread = threading.Thread(target=lambda: self.viewer.run())
+        self.viewer_thread.start()
+        self.memories = Memories(self.memory)
+        self.templatesLoader = Templates(self.memory)
+        self.bt = BehaviorTree('behavior_tree', self.memory)
+        self.nodes = Nodes(self.memory)
+        self.generic = GenericBuilder('builder', {'build'}, ['memory', 'templates', 'vars', 'nodes'])
+        self.io.reg(self.memories)
+        self.io.reg(self.bt)
+        self.io.reg(self.nodes)
+        self.io.reg(self.generic)
+        self.io.reg(self.templatesLoader)
+        self.io.accept(Task(message=loaded_bt, sender_name='anon', keywords={'build'}))
+        # self.io.accept(Task(message=BehaviorTree.TICK, keywords={'behavior_tree'}, sender_name='anonymous'))
+        self.io.run_all()
+        # print("HMM VLYA")
+        # self.bt.tick()
+        # self.viewer.on_states({
+        #     'data': yaml.dump({k: v for k, v in self.memory.vars.items() if k[:9] == "__STATE__"})
+        # })
+        time.sleep(2)
+        states = {k: "UNDEFINED" for k, v in self.memory.vars.items() if k[:9] == "__STATE__"}
+        # states2 = {
+        #     '__P0_prec_0_gc1': 2,
+        #     '__P0_prec_0_skipper': 2,
+        #     '__P0_prec_0_fallback': 0,
+        #     '__P0_prec_0_fix_F': 0,
+        #     'P1': 0,
+        #     '_P1_action': 1,
+        #     '_P0_prec_0': 0,
+        #     'root': 1,
+        #     '_root_gc1': 1,
+        #     '_root_gc2': 1,
+        #     '_root_skipper': 1,
+        #     '_root_fallback': 1,
+        #     '_root_fix_R': 0,
+        #     '_root_fix_F': 0,
+        #     'P4': 1,
+        #     'P5': 0
+        # }
+        # self.viewer.on_states({
+        #     'data': yaml.dump({'__STATE__'+k:v for k, v in states2.items()})
+        # })
+        while True:
+            for k in self.bt.memory.vars:
+                if k[:9] == "__STATE__":
+                    self.bt.memory.vars[k] = 3
+
+            self.bt.tick()
+            new_states = {
+                k: self.memory.vars[k] for k in self.memory.changes() if k in states and self.memory.vars[k] != states[k]
+            }
+            self.viewer.on_states({
+                'data': yaml.dump(new_states)
+            })
+            states.update(new_states)
+            time.sleep(1)
+
 
 
 from pycallgraph import PyCallGraph

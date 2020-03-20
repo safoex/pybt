@@ -226,6 +226,7 @@ class Templates(Nodes):
                 'type': node['type'],
                 'id': '$name'
             }
+
             for arg_type, args in template_py['args'].items():
                 for a in args:
                     node_desc_template[a] = '$' + a

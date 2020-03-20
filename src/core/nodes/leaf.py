@@ -16,8 +16,8 @@ def LeafNodeInheriter(NodeClass):
                 if res is None:
                     return self.true_state
                 return self.true_state if res else self.false_state
-            except BaseException:
-                print('exception in ' + self.id)
+            except BaseException as e:
+                print('exception in ' + self.id, ": ", e)
                 return self.false_state
     return _Leaf
 

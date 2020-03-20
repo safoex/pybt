@@ -6,7 +6,7 @@ class Node:
         self.id = name
         self.memory = memory
         if not no_add:
-            self.memory.add({self.state_key(): State.RUNNING})
+            self.memory.add({self.state_key(): 4})
         self.children = []
         self._after_tick = None
         self._before_tick = None

@@ -404,7 +404,7 @@ templates:
     args:
       required: [place]
       optional:
-        objects: [soda, sprayer, virus]
+        objects: [soda, sprayer, dirt]
     nodes:
       $name:
         type: t/action

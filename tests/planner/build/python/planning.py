@@ -20,7 +20,7 @@ def make_action(preconditions, script, immediate, postconditions):
                 
             ~seq:
                 type: sequence
-                children: [~started, __preconditions__, ~action, ~set_started, ~running]
+                children: [~started, __preconditions__, ~set_started, ~action, ~running]
 
             ~started:
                 type: condition
@@ -36,7 +36,7 @@ def make_action(preconditions, script, immediate, postconditions):
 
             ~set_started:
                 type: action
-                script: ~finished = False; ~started = True;
+                script: ~finished = False; ~started = True; __A_return_var = "~finished";
                 immediate:
                     ~finished: False
                     ~started: True
@@ -46,6 +46,8 @@ def make_action(preconditions, script, immediate, postconditions):
                 expression: True
                 true_state: RUNNING
                 false_state: RUNNING
+                
+        children: []
 
     """
 
@@ -63,6 +65,7 @@ def make_action(preconditions, script, immediate, postconditions):
         for i, prec in enumerate(preconditions):
             prec_id = '~prec_' + str(i)
             pyobj['nodes'][prec_id] = prec
+            # pyobj['children'].append(prec_id)
     else:
         yml = yml.replace('__preconditions__,', ' ')
 
@@ -70,7 +73,27 @@ def make_action(preconditions, script, immediate, postconditions):
 
     for pc in postconditions:
         pc.update({'~finished': 'True'})
+        if isinstance(pc['prob'], str):
+            z = {'z': 0}
+            exec('z = ' + pc['prob'], {}, z)
+            pc['prob'] = z['z']
     pyobj['nodes']['~action']['postconditions'] = postconditions
+    pyobj['children'].append('~action')
+    return pyobj
+
+
+def make_wipe_action(place, objects):
+    yml = """
+    nodes:
+        $name:
+            postconditions:
+              - place: ANY
+                prob: 1
+    """
+    pyobj = yaml.safe_load(yml)
+    for obj in objects:
+        pyobj['nodes']['$name']['postconditions'][0]['has_no['+place+']['+obj+"]"] = 'RUNNING'
+        pyobj['nodes']['$name']['postconditions'][0]['wiped['+place+']['+obj+"]"] = 'SUCCESS'
     return pyobj
 
 

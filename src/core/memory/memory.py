@@ -69,6 +69,8 @@ class Memory:
 
     @staticmethod
     def unindent(block, symbol=None):
+        if isinstance(block, bool):
+            return str(block)
         block = Memory.unquote(block)
 
         def symbols_from_beginning(string, _symbol='\t'):

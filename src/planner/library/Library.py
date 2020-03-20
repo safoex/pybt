@@ -134,6 +134,8 @@ class TemplateLibrary:
                             elif prec['val'] == 'FAILURE':
                                 to = self.normal_action_postconditions
                                 break
+                # print('-------------------')
+                # print(yaml.dump(instance))
 
                 for postcondition in instance['nodes']['id']['postconditions']:
                     prob = postcondition['prob']
@@ -215,8 +217,8 @@ class TemplateLibrary:
                     prob_on_state = state.prob({state.state_key: 'S'})
                     if prob_on_state > 0:
                         candidates.append((prob_on_state * prob, (template, args)))
-                    else:
-                        print(template, args)
+                    # else:
+                    #     print(template, args)
         candidates.sort(key=lambda c: c[0])
         return [(t, a) for c, (t, a) in candidates]
 
@@ -233,16 +235,16 @@ class TemplateLibrary:
             return []
         condition = copy.deepcopy(condition)
         # cond_def = condition['recall']
-        print(condition)
+        print("defined as: ", condition)
         for k in condition:
             if isinstance(condition[k], str):
                 condition[k] = Memory.unquote(condition[k])
         candidates = self.get_candidate_actions(condition, history, state)
-        print("canditates ", len(candidates))
+        # print("canditates ", len(candidates))
         # for t, a in candidates:
         #     a.update({'post_check_condition': cond_def})
         if len(candidates) > 0:
-            print(candidates[0])
+            print("resolve with: ", candidates[0])
         candidates_and_new_ids = [
             (self.get_next_uuid(), c) for c in candidates
         ]

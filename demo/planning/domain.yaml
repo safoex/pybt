@@ -1,5 +1,5 @@
 types:
-  object: [soda, sprayer, virus]
+  object: [soda, sprayer, dirt]
   place: [table1, table2, location]
   pose: [wipe, normal]
 
@@ -30,25 +30,25 @@ vars:
     table1:
       soda: RUNNING
       sprayer: RUNNING
-      virus: RUNNING
+      dirt: RUNNING
     table2:
       soda: RUNNING
       sprayer: RUNNING
-      virus: RUNNING
+      dirt: RUNNING
     charger:
       soda: FAILURE
       sprayer: FAILURE
-      virus: RUNNING
+      dirt: RUNNING
   luminousity: RUNNING
   wiped:
     table1:
       soda: FAILURE
       sprayer: FAILURE
-      virus: FAILURE
+      dirt: FAILURE
     table2:
       soda: FAILURE
       sprayer: FAILURE
-      virus: FAILURE
+      dirt: FAILURE
 
 
 actions:

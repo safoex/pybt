@@ -10,7 +10,7 @@ import copy
 
 class BeliefPlanner:
     def __init__(self, partial_behavior_tree, library: TemplateLibrary,
-                 ticks_limit=100, states_limit=100):
+                 ticks_limit=1000, states_limit=10000):
         self.bt_def = None
         if isinstance(partial_behavior_tree, str):
             partial_behavior_tree = yaml.safe_load(partial_behavior_tree)
@@ -127,7 +127,7 @@ class BeliefPlanner:
                 else:
                     conditions[name] = BeliefMemory(ps, pr)
         results = list(reversed(sorted([(occs.prob(), name) for name, occs in conditions.items()])))
-        print('most pop failed cond results for status ', status, ' ', results)
+        # print('most pop failed cond results for status ', status, ' ', results)
         if len(results) > 0:
             cond =  results[0][1]
             return conditions[cond], cond
@@ -147,7 +147,7 @@ class BeliefPlanner:
 
     def find_most_popular_failed_condition_every_status(self, mem: BeliefMemory, bt: PlanningBehaviorTree):
         conditions = {}
-        print("TOTAL PROB ", mem.prob())
+        # print("TOTAL PROB ", mem.prob())
         for ps, pr in mem.states:
             res = self.find_lowest_failed_condition_every_status(ps, bt)
             if res is not None:
@@ -161,7 +161,7 @@ class BeliefPlanner:
                 else:
                     conditions[name] = {status: (h, l, BeliefMemory(ps, pr))}
         results = list(reversed(sorted([(occs.prob(), h, -l, name, status)  for name, cond_with_status in conditions.items() for status, (h, l, occs) in cond_with_status.items()])))
-        print(results)
+        # print(results)
         if len(results) > 0:
             cond = results[0][-2]
             status = results[0][-1]
@@ -247,18 +247,20 @@ class BeliefPlanner:
             parent = bt.find_parent(parent)
         if status == 'F' or target_condition[-2:] == 'SV':
             parent = bt.find_parent(parent)
-        print('STATUS TO RESOLVE : ', status)
+        # print('STATUS TO RESOLVE : ', status)
         best_actions = self.library.get_best_templates_for_condition(bt.nodes[target_condition].func, None, state)
-        if len(best_actions) == 0:
-            print('could not resolve', bt.nodes[target_condition].func)
+        # if len(best_actions) == 0:
+        #     print('could not resolve', bt.nodes[target_condition].func)
         self.insert_actions(bt.nodes[parent].children[1].id, [best_actions[0]], bt)
 
     def resolve_one_issue(self, initial_state: BeliefMemory, bt: PlanningBehaviorTree):
         next_condition = self.find_next_condition_to_resolve(initial_state, bt)
         if next_condition is None:
-            return 0
+            print("no condition to improve")
+            return 1
         target, status, substate = next_condition
-        print(target)
+        print('-------------------------------------------')
+        print("Condition to improve: ", target)
         threat = self.find_threats(target, substate, bt)
         insert_operations = 0
         if threat is not None:
@@ -286,7 +288,9 @@ class BeliefPlanner:
             result = bt.verify(copy.deepcopy(initial_state), ticks_limit=self.ticks_limit,
                                states_limit=self.states_limit)
             finished, to_refine = result.split_by(lambda s: s[result.state_key] == 'S')
+            prev_last_prob = last_prob
             last_prob = finished.prob()
-            for s, p in to_refine.states:
-                print(s['_S'], p)
+            # for s, p in to_refine.states:
+            #     print(s['_S'], p)
+            print("current success probability: ", last_prob)
         return last_prob, total_inserted

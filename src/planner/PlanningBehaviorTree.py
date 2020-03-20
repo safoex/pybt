@@ -11,7 +11,7 @@ class PlanningBehaviorTree(BehaviorTree):
         memory = with_memory or self.memory
         return self.root.tick(memory)
 
-    def verify(self, with_memory: BeliefMemory, ticks_limit=100, states_limit=100):
+    def verify(self, with_memory: BeliefMemory, ticks_limit=100, states_limit=10000):
         memory = with_memory
         results = BeliefMemory([])
         ticks_counter = 0
