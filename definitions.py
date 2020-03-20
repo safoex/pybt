@@ -1,11 +1,15 @@
 import os
-ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/pybt'
+
 
 class State(object):
     RUNNING = 0
     SUCCESS = 1
     FAILURE = 2
-    Key = lambda key: '__STATE__' + key
+
+    @staticmethod
+    def Key(key):
+        return '__STATE__' + key
 
     @staticmethod
     def from_str(string_rep):

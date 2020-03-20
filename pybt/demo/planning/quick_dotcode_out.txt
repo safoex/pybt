@@ -1,0 +1,142 @@
+digraph g {
+node [shape=rectangle, style=filled, color=white];
+	subgraph cluster_1 {
+		color=transparent;
+		"root"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="#fde910">
+                            <tr><td>-&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+		subgraph cluster_2 {
+			color=transparent;
+			"_root_fallback"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="white">
+                            <tr><td>?</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+			subgraph cluster_3 {
+				color=transparent;
+				"_root_skipper"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="white">
+                            <tr><td>=&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+				"_root_gc1"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="orange">
+                            <tr><td></td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+				subgraph cluster_4 {
+					color=transparent;
+					"_root_fix_R"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="white">
+                            <tr><td>-&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+					subgraph cluster_5 {
+						color=transparent;
+						"P0"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="#9262d1">
+                            <tr><td>=&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+						"_P0_action"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="green">
+                            <tr><td></td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+					}
+				}
+			}
+			subgraph cluster_6 {
+				color=transparent;
+				"_root_fix_F"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="white">
+                            <tr><td>-&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+				"P4"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="#9262d1">
+                            <tr><td>-&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+				"P6"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="#9262d1">
+                            <tr><td>-&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+			}
+		}
+		"_root_gc2"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="orange">
+                            <tr><td></td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+	}
+	"root" -> "_root_fallback";
+	"root" -> "_root_gc2";
+		"_root_fallback" -> "_root_skipper";
+		"_root_fallback" -> "_root_fix_F";
+			"_root_skipper" -> "_root_gc1";
+			"_root_skipper" -> "_root_fix_R";
+				"_root_fix_R" -> "P0";
+					"P0" -> "_P0_action";
+			"_root_fix_F" -> "P4";
+			"_root_fix_F" -> "P6";
+
+}

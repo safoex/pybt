@@ -1,0 +1,609 @@
+digraph g {
+node [shape=rectangle, style=filled, color=white];
+	subgraph hren_kakoi_to1 {
+		color=transparent;
+		"_yarp_seq"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="white">
+                            <tr><td>-&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td bgcolor="#3283a8"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+		"_yarp"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="green">
+                            <tr><td></td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td>_yarp_routine()</td></tr>
+                      
+                              <tr><td bgcolor="green"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+		subgraph hren_kakoi_to2 {
+			color=transparent;
+			"root"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="#9262d1">
+                            <tr><td>-&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td>sequence<br/>object: virus<br/>t: nowhere_in<br/></td></tr>
+                      
+                              <tr><td bgcolor="#3283a8"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+			"_root_table1_has_no"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="#9262d1">
+                            <tr><td>-&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td>sequence<br/>expression: has_no[table1][virus] == SUCCESS<br/>on_F: FAILURE<br/>t: precondition<br/></td></tr>
+                      
+                              <tr><td bgcolor="green"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+			subgraph hren_kakoi_to3 {
+				color=transparent;
+				"_root_table2_has_no"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="#fde910">
+                            <tr><td>-&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td>sequence<br/>expression: has_no[table2][virus] == SUCCESS<br/>on_F: FAILURE<br/>t: precondition<br/></td></tr>
+                      
+                              <tr><td bgcolor="#3283a8"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+				subgraph hren_kakoi_to4 {
+					color=transparent;
+					"__root_table2_has_no_fallback"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="white">
+                            <tr><td>?</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td bgcolor="#3283a8"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+					subgraph hren_kakoi_to5 {
+						color=transparent;
+						"__root_table2_has_no_skipper"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="white">
+                            <tr><td>=&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td bgcolor="#3283a8"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+						"__root_table2_has_no_gc1"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="orange">
+                            <tr><td></td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td>has_no[table2][virus]</td></tr>
+                      
+                              <tr><td bgcolor="#3283a8"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+						subgraph hren_kakoi_to6 {
+							color=transparent;
+							"__root_table2_has_no_fix_R"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="white">
+                            <tr><td>-&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td bgcolor="#3283a8"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+							subgraph hren_kakoi_to7 {
+								color=transparent;
+								"P5"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="#fde910">
+                            <tr><td>?</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td>fallback<br/>detect: virus on table2<br/>t: detect_on<br/></td></tr>
+                      
+                              <tr><td bgcolor="#3283a8"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+								subgraph hren_kakoi_to8 {
+									color=transparent;
+									"_P5_if_wiped"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="white">
+                            <tr><td>-&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td bgcolor="#3283a8"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+									"_P5_if"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="orange">
+                            <tr><td></td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td>wiped[table2][virus] == SUCCESS</td></tr>
+                      
+                              <tr><td bgcolor="green"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+									subgraph hren_kakoi_to9 {
+										color=transparent;
+										"_P5_wiped"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="#fde910">
+                            <tr><td>=&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td>skipper<br/>{}<br/></td></tr>
+                      
+                              <tr><td bgcolor="#3283a8"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+										subgraph hren_kakoi_to10 {
+											color=transparent;
+											"__P5_wiped_seq"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="white">
+                            <tr><td>-&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td bgcolor="#3283a8"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+											subgraph hren_kakoi_to11 {
+												color=transparent;
+												"__P5_wiped_prec_0"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="#fde910">
+                            <tr><td>-&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td>sequence<br/>expression: location == table2<br/>on_F: FAILURE<br/>t: precondition<br/></td></tr>
+                      
+                              <tr><td bgcolor="#3283a8"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+												subgraph hren_kakoi_to12 {
+													color=transparent;
+													"___P5_wiped_prec_0_fallback"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="white">
+                            <tr><td>?</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td bgcolor="#3283a8"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+													subgraph hren_kakoi_to13 {
+														color=transparent;
+														"___P5_wiped_prec_0_skipper"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="white">
+                            <tr><td>=&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td bgcolor="red"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+														"___P5_wiped_prec_0_gc1"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="orange">
+                            <tr><td></td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td>location == table2</td></tr>
+                      
+                              <tr><td bgcolor="red"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+													}
+													subgraph hren_kakoi_to14 {
+														color=transparent;
+														"___P5_wiped_prec_0_fix_F"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="white">
+                            <tr><td>-&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td bgcolor="#3283a8"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+														subgraph hren_kakoi_to15 {
+															color=transparent;
+															"P16"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="#9262d1">
+                            <tr><td>=&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td>skipper<br/>{}<br/></td></tr>
+                      
+                              <tr><td bgcolor="#3283a8"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+															"_P16_action"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="green">
+                            <tr><td></td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td>goto(table2);<br/></td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+														}
+													}
+												}
+												"___P5_wiped_prec_0_gc2"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="orange">
+                            <tr><td></td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td>location == table2</td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+											}
+											"__P5_wiped_prec_1"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="#9262d1">
+                            <tr><td>-&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td>sequence<br/>expression: has_no[table2][virus] == RUNNING<br/>on_F: FAILURE<br/>t: precondition<br/></td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+											"__P5_wiped_action"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="green">
+                            <tr><td></td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td>detect_on(virus, table2);<br/></td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+										}
+									}
+								}
+								subgraph hren_kakoi_to16 {
+									color=transparent;
+									"_P5_not_wiped"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="#fde910">
+                            <tr><td>=&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td>skipper<br/>{}<br/></td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+									subgraph hren_kakoi_to17 {
+										color=transparent;
+										"__P5_not_wiped_seq"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="white">
+                            <tr><td>-&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+										subgraph hren_kakoi_to18 {
+											color=transparent;
+											"__P5_not_wiped_prec_0"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="#fde910">
+                            <tr><td>-&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td>sequence<br/>expression: location == table2<br/>on_F: FAILURE<br/>t: precondition<br/></td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+											subgraph hren_kakoi_to19 {
+												color=transparent;
+												"___P5_not_wiped_prec_0_fallback"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="white">
+                            <tr><td>?</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+												subgraph hren_kakoi_to20 {
+													color=transparent;
+													"___P5_not_wiped_prec_0_skipper"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="white">
+                            <tr><td>=&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+													"___P5_not_wiped_prec_0_gc1"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="orange">
+                            <tr><td></td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td>location == table2</td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+												}
+												subgraph hren_kakoi_to21 {
+													color=transparent;
+													"___P5_not_wiped_prec_0_fix_F"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="white">
+                            <tr><td>-&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+													subgraph hren_kakoi_to22 {
+														color=transparent;
+														"P6"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="#9262d1">
+                            <tr><td>=&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td>skipper<br/>{}<br/></td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+														"_P6_action"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="green">
+                            <tr><td></td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td>goto(table2);<br/></td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+													}
+												}
+											}
+											"___P5_not_wiped_prec_0_gc2"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="orange">
+                            <tr><td></td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td>location == table2</td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+										}
+										"__P5_not_wiped_prec_1"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="#9262d1">
+                            <tr><td>-&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td>sequence<br/>expression: has_no[table2][virus] == RUNNING<br/>on_F: FAILURE<br/>t: precondition<br/></td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+										"__P5_not_wiped_action"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="green">
+                            <tr><td></td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td>detect_on(virus, table2);<br/></td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+									}
+								}
+							}
+							"P13"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="#9262d1">
+                            <tr><td>?</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td>fallback<br/>detect: virus on table2<br/>t: detect_on<br/></td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+						}
+					}
+					subgraph hren_kakoi_to23 {
+						color=transparent;
+						"__root_table2_has_no_fix_F"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="white">
+                            <tr><td>-&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+						subgraph hren_kakoi_to24 {
+							color=transparent;
+							"P8"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="#9262d1">
+                            <tr><td>=&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td>skipper<br/>{}<br/></td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+							"_P8_action"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="green">
+                            <tr><td></td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td>wipe(table2);<br/></td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+						}
+						subgraph hren_kakoi_to25 {
+							color=transparent;
+							"P12"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="#9262d1">
+                            <tr><td>=&gt;</td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td>skipper<br/>{}<br/></td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+							"_P12_action"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="green">
+                            <tr><td></td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td>wipe(table2);<br/></td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+						}
+					}
+				}
+				"__root_table2_has_no_gc2"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="orange">
+                            <tr><td></td></tr>
+                            <tr><td> </td></tr>
+                      
+                              <tr><td>has_no[table2][virus]</td></tr>
+                      
+                              <tr><td bgcolor="grey"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+			}
+		}
+	}
+	"_yarp_seq" -> "_yarp";
+	"_yarp_seq" -> "root";
+		"root" -> "_root_table1_has_no";
+		"root" -> "_root_table2_has_no";
+			"_root_table2_has_no" -> "__root_table2_has_no_fallback";
+			"_root_table2_has_no" -> "__root_table2_has_no_gc2";
+				"__root_table2_has_no_fallback" -> "__root_table2_has_no_skipper";
+				"__root_table2_has_no_fallback" -> "__root_table2_has_no_fix_F";
+					"__root_table2_has_no_skipper" -> "__root_table2_has_no_gc1";
+					"__root_table2_has_no_skipper" -> "__root_table2_has_no_fix_R";
+						"__root_table2_has_no_fix_R" -> "P5";
+						"__root_table2_has_no_fix_R" -> "P13";
+							"P5" -> "_P5_if_wiped";
+							"P5" -> "_P5_not_wiped";
+								"_P5_if_wiped" -> "_P5_if";
+								"_P5_if_wiped" -> "_P5_wiped";
+									"_P5_wiped" -> "__P5_wiped_seq";
+										"__P5_wiped_seq" -> "__P5_wiped_prec_0";
+										"__P5_wiped_seq" -> "__P5_wiped_prec_1";
+										"__P5_wiped_seq" -> "__P5_wiped_action";
+											"__P5_wiped_prec_0" -> "___P5_wiped_prec_0_fallback";
+											"__P5_wiped_prec_0" -> "___P5_wiped_prec_0_gc2";
+												"___P5_wiped_prec_0_fallback" -> "___P5_wiped_prec_0_skipper";
+												"___P5_wiped_prec_0_fallback" -> "___P5_wiped_prec_0_fix_F";
+													"___P5_wiped_prec_0_skipper" -> "___P5_wiped_prec_0_gc1";
+													"___P5_wiped_prec_0_fix_F" -> "P16";
+														"P16" -> "_P16_action";
+								"_P5_not_wiped" -> "__P5_not_wiped_seq";
+									"__P5_not_wiped_seq" -> "__P5_not_wiped_prec_0";
+									"__P5_not_wiped_seq" -> "__P5_not_wiped_prec_1";
+									"__P5_not_wiped_seq" -> "__P5_not_wiped_action";
+										"__P5_not_wiped_prec_0" -> "___P5_not_wiped_prec_0_fallback";
+										"__P5_not_wiped_prec_0" -> "___P5_not_wiped_prec_0_gc2";
+											"___P5_not_wiped_prec_0_fallback" -> "___P5_not_wiped_prec_0_skipper";
+											"___P5_not_wiped_prec_0_fallback" -> "___P5_not_wiped_prec_0_fix_F";
+												"___P5_not_wiped_prec_0_skipper" -> "___P5_not_wiped_prec_0_gc1";
+												"___P5_not_wiped_prec_0_fix_F" -> "P6";
+													"P6" -> "_P6_action";
+					"__root_table2_has_no_fix_F" -> "P8";
+					"__root_table2_has_no_fix_F" -> "P12";
+						"P8" -> "_P8_action";
+						"P12" -> "_P12_action";
+
+}

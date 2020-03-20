@@ -1,0 +1,111 @@
+digraph g {
+node [shape=rectangle, style=filled, color=white];
+
+		subgraph hren_kakoi_to2 {
+			color=transparent;
+			"root"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="#fde910">
+                            <tr><td>-&gt;</td></tr>
+                              <tr><td>sequence<br/>expression: seen[soda]<br/>t: precondition<br/></td></tr>
+                      
+                              <tr><td bgcolor="green"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+			subgraph hren_kakoi_to3 {
+				color=transparent;
+				"_root_fallback"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="white">
+                            <tr><td>?</td></tr>
+                              <tr><td bgcolor="green"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+				subgraph hren_kakoi_to4 {
+					color=transparent;
+					"_root_skipper"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="white">
+                            <tr><td>=&gt;</td></tr>
+                              <tr><td bgcolor="green"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+					"_root_gc1"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="orange">
+                            <tr><td></td></tr>
+                              <tr><td>seen[soda]</td></tr>
+                      
+                              <tr><td bgcolor="green"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+					subgraph hren_kakoi_to5 {
+						color=transparent;
+						"_root_fix_R"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="white">
+                            <tr><td>-&gt;</td></tr>
+                              <tr><td bgcolor="#3283a8"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+					}
+				}
+				subgraph hren_kakoi_to7 {
+					color=transparent;
+					"_root_fix_F"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="white">
+                            <tr><td>-&gt;</td></tr>
+                              <tr><td bgcolor="#3283a8"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+					"P4"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="#9262d1">
+                            <tr><td>-&gt;</td></tr>
+                              <tr><td>sequence<br/>object: soda<br/>t: find_in<br/></td></tr>
+                      
+                              <tr><td bgcolor="green"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+					"P5"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="#9262d1">
+                            <tr><td>-&gt;</td></tr>
+                              <tr><td>sequence<br/>object: soda<br/>t: find_in<br/></td></tr>
+                      
+                              <tr><td bgcolor="#3283a8"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+				}
+			}
+			"_root_gc2"[label=
+                        <
+                            <table border='1' cellborder='0' bgcolor="orange">
+                            <tr><td></td></tr>
+                              <tr><td>seen[soda]</td></tr>
+
+                              <tr><td bgcolor="green"><font point-size='3'> </font></td></tr>
+                              </table>
+                          >
+                      ];
+		}
+	
+		"root" -> "_root_fallback";
+		"root" -> "_root_gc2";
+			"_root_fallback" -> "_root_skipper";
+			"_root_fallback" -> "_root_fix_F";
+				"_root_skipper" -> "_root_gc1";
+				"_root_skipper" -> "_root_fix_R";
+				"_root_fix_F" -> "P4";
+				"_root_fix_F" -> "P5";
+
+}

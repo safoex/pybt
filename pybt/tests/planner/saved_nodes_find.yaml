@@ -1,0 +1,764 @@
+nodes:
+  P0:
+    children: [_P0_finished, _P0_seq]
+    object: soda
+    postconditions:
+    - {prob: 0.5, 'seen[soda]': SUCCESS}
+    - {prob: 0.5, 'seen[soda]': FAILURE}
+    preconditions:
+    - {type: t/luminousity}
+    - {cond_type: condition, type: t/seen, val: RUNNING, what: soda}
+    script: detect(soda);
+    type: skipper
+    view:
+      children: [_P0_action]
+  P1:
+    children: [_P1_finished, _P1_seq]
+    place: table1
+    postconditions:
+    - {luminousity: SUCCESS, prob: 1}
+    script: light_on(table1)
+    type: skipper
+    view:
+      children: [_P1_action]
+  P4:
+    children: [_P4_table1_resolve, _P4_table2_resolve]
+    object: soda
+    places: [table1, table2]
+    postconditions:
+    - {prob: 0.9, 'seen[soda]': SUCCESS}
+    - {prob: 0.1, 'seen[soda]': FAILURE}
+    preconditions:
+    - {cond_type: condition, type: t/seen, val: FAILURE, what: soda}
+    type: sequence
+    view:
+      children: []
+      object: soda
+      t: find_in
+  P5:
+    children: [_P5_table1_resolve, _P5_table2_resolve]
+    object: soda
+    places: [table1, table2]
+    postconditions:
+    - {prob: 0.9, 'seen[soda]': SUCCESS}
+    - {prob: 0.1, 'seen[soda]': FAILURE}
+    preconditions:
+    - {cond_type: condition, type: t/seen, val: FAILURE, what: soda}
+    type: sequence
+    view:
+      children: []
+      object: soda
+      t: find_in
+  _P0_action:
+    immediate: None
+    postconditions:
+    - {_P0_finished: 'True', prob: 0.5, 'seen[soda]': SUCCESS}
+    - {_P0_finished: 'True', prob: 0.5, 'seen[soda]': FAILURE}
+    script: detect(soda);
+    type: action
+  _P0_finished: {expression: _P0_finished, false_state: RUNNING, true_state: SUCCESS,
+    type: condition}
+  _P0_prec_0:
+    children: [__P0_prec_0_fallback, __P0_prec_0_gc2]
+    false_state: FAILURE
+    type: sequence
+    var: luminousity
+    view:
+      children: []
+      expression: luminousity == SUCCESS
+      on_F: FAILURE
+      t: precondition
+  _P0_prec_1:
+    children: [__P0_prec_1_fallback, __P0_prec_1_gc2]
+    cond_type: condition
+    false_state: FAILURE
+    type: sequence
+    val: RUNNING
+    var: seen[soda]
+    view:
+      children: []
+      expression: seen[soda] == RUNNING
+      on_F: FAILURE
+      t: precondition
+    what: soda
+  _P0_running: {expression: true, false_state: RUNNING, true_state: RUNNING, type: condition}
+  _P0_seq:
+    children: [_P0_started, _P0_prec_0, _P0_prec_1, _P0_set_started, _P0_action, _P0_running]
+    type: sequence
+  _P0_set_started:
+    immediate: {_P0_finished: false, _P0_started: true}
+    script: _P0_finished = False; _P0_started = True; __A_return_var = "_P0_finished";
+    type: action
+  _P0_started: {expression: _P0_started, false_state: SUCCESS, true_state: RUNNING,
+    type: condition}
+  _P1_action:
+    immediate: None
+    postconditions:
+    - {_P1_finished: 'True', luminousity: SUCCESS, prob: 1}
+    script: light_on(table1)
+    type: action
+  _P1_finished: {expression: _P1_finished, false_state: RUNNING, true_state: SUCCESS,
+    type: condition}
+  _P1_running: {expression: true, false_state: RUNNING, true_state: RUNNING, type: condition}
+  _P1_seq:
+    children: [_P1_started, _P1_set_started, _P1_action, _P1_running]
+    type: sequence
+  _P1_set_started:
+    immediate: {_P1_finished: false, _P1_started: true}
+    script: _P1_finished = False; _P1_started = True; __A_return_var = "_P1_finished";
+    type: action
+  _P1_started: {expression: _P1_started, false_state: SUCCESS, true_state: RUNNING,
+    type: condition}
+  _P4_table1_detect:
+    children: [__P4_table1_detect_finished, __P4_table1_detect_seq]
+    object: soda
+    postconditions:
+    - {prob: 0.5, 'seen[soda]': SUCCESS}
+    - {prob: 0.5, 'seen[soda]': FAILURE}
+    preconditions:
+    - {type: t/luminousity}
+    - {cond_type: condition, type: t/seen, val: FAILURE, what: soda}
+    script: detect(soda);
+    seen_prec: FAILURE
+    type: skipper
+    view:
+      children: [__P4_table1_detect_action]
+  _P4_table1_force_goto:
+    children: [__P4_table1_force_goto_finished, __P4_table1_force_goto_seq]
+    place: table1
+    postconditions:
+    - {location: table1, prob: 0.95}
+    - {location: ANY, prob: 0.05}
+    script: goto(table1);
+    type: skipper
+    view:
+      children: [__P4_table1_force_goto_action]
+  _P4_table1_go_and_detect:
+    children: [_P4_table1_force_goto, _P4_table1_detect]
+    type: sequence
+  _P4_table1_if_seen: {expression: 'seen[soda] == "SUCCESS"', false_state: FAILURE,
+    true_state: SUCCESS, type: condition}
+  _P4_table1_resolve:
+    children: [_P4_table1_go_and_detect]
+    type: fallback
+  _P4_table2_detect:
+    children: [__P4_table2_detect_finished, __P4_table2_detect_seq]
+    object: soda
+    postconditions:
+    - {prob: 0.5, 'seen[soda]': SUCCESS}
+    - {prob: 0.5, 'seen[soda]': FAILURE}
+    preconditions:
+    - {type: t/luminousity}
+    - {cond_type: condition, type: t/seen, val: FAILURE, what: soda}
+    script: detect(soda);
+    seen_prec: FAILURE
+    type: skipper
+    view:
+      children: [__P4_table2_detect_action]
+  _P4_table2_force_goto:
+    children: [__P4_table2_force_goto_finished, __P4_table2_force_goto_seq]
+    place: table2
+    postconditions:
+    - {location: table2, prob: 0.95}
+    - {location: ANY, prob: 0.05}
+    script: goto(table2);
+    type: skipper
+    view:
+      children: [__P4_table2_force_goto_action]
+  _P4_table2_go_and_detect:
+    children: [_P4_table2_force_goto, _P4_table2_detect]
+    type: sequence
+  _P4_table2_if_seen: {expression: 'seen[soda] == "SUCCESS"', false_state: FAILURE,
+    true_state: SUCCESS, type: condition}
+  _P4_table2_resolve:
+    children: [_P4_table2_go_and_detect]
+    type: fallback
+  _P5_table1_detect:
+    children: [__P5_table1_detect_finished, __P5_table1_detect_seq]
+    object: soda
+    postconditions:
+    - {prob: 0.5, 'seen[soda]': SUCCESS}
+    - {prob: 0.5, 'seen[soda]': FAILURE}
+    preconditions:
+    - {type: t/luminousity}
+    - {cond_type: condition, type: t/seen, val: FAILURE, what: soda}
+    script: detect(soda);
+    seen_prec: FAILURE
+    type: skipper
+    view:
+      children: [__P5_table1_detect_action]
+  _P5_table1_force_goto:
+    children: [__P5_table1_force_goto_finished, __P5_table1_force_goto_seq]
+    place: table1
+    postconditions:
+    - {location: table1, prob: 0.95}
+    - {location: ANY, prob: 0.05}
+    script: goto(table1);
+    type: skipper
+    view:
+      children: [__P5_table1_force_goto_action]
+  _P5_table1_go_and_detect:
+    children: [_P5_table1_force_goto, _P5_table1_detect]
+    type: sequence
+  _P5_table1_if_seen: {expression: 'seen[soda] == "SUCCESS"', false_state: FAILURE,
+    true_state: SUCCESS, type: condition}
+  _P5_table1_resolve:
+    children: [_P5_table1_go_and_detect]
+    type: fallback
+  _P5_table2_detect:
+    children: [__P5_table2_detect_finished, __P5_table2_detect_seq]
+    object: soda
+    postconditions:
+    - {prob: 0.5, 'seen[soda]': SUCCESS}
+    - {prob: 0.5, 'seen[soda]': FAILURE}
+    preconditions:
+    - {type: t/luminousity}
+    - {cond_type: condition, type: t/seen, val: FAILURE, what: soda}
+    script: detect(soda);
+    seen_prec: FAILURE
+    type: skipper
+    view:
+      children: [__P5_table2_detect_action]
+  _P5_table2_force_goto:
+    children: [__P5_table2_force_goto_finished, __P5_table2_force_goto_seq]
+    place: table2
+    postconditions:
+    - {location: table2, prob: 0.95}
+    - {location: ANY, prob: 0.05}
+    script: goto(table2);
+    type: skipper
+    view:
+      children: [__P5_table2_force_goto_action]
+  _P5_table2_go_and_detect:
+    children: [_P5_table2_force_goto, _P5_table2_detect]
+    type: sequence
+  _P5_table2_if_seen: {expression: 'seen[soda] == "SUCCESS"', false_state: FAILURE,
+    true_state: SUCCESS, type: condition}
+  _P5_table2_resolve:
+    children: [_P5_table2_go_and_detect]
+    type: fallback
+  __P0_prec_0_dumb1: {expression: true, false_state: SUCCESS, true_state: SUCCESS,
+    type: condition}
+  __P0_prec_0_dumb2: {expression: true, false_state: SUCCESS, true_state: SUCCESS,
+    type: condition}
+  __P0_prec_0_fallback:
+    children: [__P0_prec_0_skipper, __P0_prec_0_fix_F]
+    type: fallback
+  __P0_prec_0_fix_F:
+    children: [__P0_prec_0_dumb2, P1]
+    type: sequence
+  __P0_prec_0_fix_R:
+    children: [__P0_prec_0_dumb1]
+    type: sequence
+  __P0_prec_0_gc1: {expression: luminousity == SUCCESS, false_state: FAILURE, true_state: SUCCESS,
+    type: condition, val: SUCCESS, var: luminousity}
+  __P0_prec_0_gc2: {expression: luminousity == SUCCESS, false_state: FAILURE, true_state: SUCCESS,
+    type: condition, val: SUCCESS, var: luminousity}
+  __P0_prec_0_skipper:
+    children: [__P0_prec_0_gc1, __P0_prec_0_fix_R]
+    type: skipper
+  __P0_prec_1_dumb1: {expression: true, false_state: SUCCESS, true_state: SUCCESS,
+    type: condition}
+  __P0_prec_1_dumb2: {expression: true, false_state: SUCCESS, true_state: SUCCESS,
+    type: condition}
+  __P0_prec_1_fallback:
+    children: [__P0_prec_1_skipper, __P0_prec_1_fix_F]
+    type: fallback
+  __P0_prec_1_fix_F:
+    children: [__P0_prec_1_dumb2]
+    type: sequence
+  __P0_prec_1_fix_R:
+    children: [__P0_prec_1_dumb1]
+    type: sequence
+  __P0_prec_1_gc1: {expression: 'seen[soda] == RUNNING', false_state: FAILURE, true_state: SUCCESS,
+    type: condition, val: RUNNING, var: 'seen[soda]'}
+  __P0_prec_1_gc2: {expression: 'seen[soda] == RUNNING', false_state: FAILURE, true_state: SUCCESS,
+    type: condition, val: RUNNING, var: 'seen[soda]'}
+  __P0_prec_1_skipper:
+    children: [__P0_prec_1_gc1, __P0_prec_1_fix_R]
+    type: skipper
+  __P4_table1_detect_action:
+    immediate: None
+    postconditions:
+    - {__P4_table1_detect_finished: 'True', prob: 0.5, 'seen[soda]': SUCCESS}
+    - {__P4_table1_detect_finished: 'True', prob: 0.5, 'seen[soda]': FAILURE}
+    script: detect(soda);
+    type: action
+  __P4_table1_detect_finished: {expression: __P4_table1_detect_finished, false_state: RUNNING,
+    true_state: SUCCESS, type: condition}
+  __P4_table1_detect_prec_0:
+    children: [___P4_table1_detect_prec_0_fallback, ___P4_table1_detect_prec_0_gc2]
+    false_state: FAILURE
+    type: sequence
+    var: luminousity
+    view:
+      children: []
+      expression: luminousity == SUCCESS
+      on_F: FAILURE
+      t: precondition
+  __P4_table1_detect_prec_1:
+    children: [___P4_table1_detect_prec_1_fallback, ___P4_table1_detect_prec_1_gc2]
+    cond_type: condition
+    false_state: FAILURE
+    type: sequence
+    val: FAILURE
+    var: seen[soda]
+    view:
+      children: []
+      expression: seen[soda] == FAILURE
+      on_F: FAILURE
+      t: precondition
+    what: soda
+  __P4_table1_detect_running: {expression: true, false_state: RUNNING, true_state: RUNNING,
+    type: condition}
+  __P4_table1_detect_seq:
+    children: [__P4_table1_detect_started, __P4_table1_detect_prec_0, __P4_table1_detect_prec_1,
+      __P4_table1_detect_set_started, __P4_table1_detect_action, __P4_table1_detect_running]
+    type: sequence
+  __P4_table1_detect_set_started:
+    immediate: {__P4_table1_detect_finished: false, __P4_table1_detect_started: true}
+    script: __P4_table1_detect_finished = False; __P4_table1_detect_started = True;
+      __A_return_var = "__P4_table1_detect_finished";
+    type: action
+  __P4_table1_detect_started: {expression: __P4_table1_detect_started, false_state: SUCCESS,
+    true_state: RUNNING, type: condition}
+  __P4_table1_force_goto_action:
+    immediate: None
+    postconditions:
+    - {__P4_table1_force_goto_finished: 'True', location: table1, prob: 0.95}
+    - {__P4_table1_force_goto_finished: 'True', location: ANY, prob: 0.05}
+    script: goto(table1);
+    type: action
+  __P4_table1_force_goto_finished: {expression: __P4_table1_force_goto_finished, false_state: RUNNING,
+    true_state: SUCCESS, type: condition}
+  __P4_table1_force_goto_running: {expression: true, false_state: RUNNING, true_state: RUNNING,
+    type: condition}
+  __P4_table1_force_goto_seq:
+    children: [__P4_table1_force_goto_started, __P4_table1_force_goto_set_started,
+      __P4_table1_force_goto_action, __P4_table1_force_goto_running]
+    type: sequence
+  __P4_table1_force_goto_set_started:
+    immediate: {__P4_table1_force_goto_finished: false, __P4_table1_force_goto_started: true}
+    script: __P4_table1_force_goto_finished = False; __P4_table1_force_goto_started
+      = True; __A_return_var = "__P4_table1_force_goto_finished";
+    type: action
+  __P4_table1_force_goto_started: {expression: __P4_table1_force_goto_started, false_state: SUCCESS,
+    true_state: RUNNING, type: condition}
+  __P4_table2_detect_action:
+    immediate: None
+    postconditions:
+    - {__P4_table2_detect_finished: 'True', prob: 0.5, 'seen[soda]': SUCCESS}
+    - {__P4_table2_detect_finished: 'True', prob: 0.5, 'seen[soda]': FAILURE}
+    script: detect(soda);
+    type: action
+  __P4_table2_detect_finished: {expression: __P4_table2_detect_finished, false_state: RUNNING,
+    true_state: SUCCESS, type: condition}
+  __P4_table2_detect_prec_0:
+    children: [___P4_table2_detect_prec_0_fallback, ___P4_table2_detect_prec_0_gc2]
+    false_state: FAILURE
+    type: sequence
+    var: luminousity
+    view:
+      children: []
+      expression: luminousity == SUCCESS
+      on_F: FAILURE
+      t: precondition
+  __P4_table2_detect_prec_1:
+    children: [___P4_table2_detect_prec_1_fallback, ___P4_table2_detect_prec_1_gc2]
+    cond_type: condition
+    false_state: FAILURE
+    type: sequence
+    val: FAILURE
+    var: seen[soda]
+    view:
+      children: []
+      expression: seen[soda] == FAILURE
+      on_F: FAILURE
+      t: precondition
+    what: soda
+  __P4_table2_detect_running: {expression: true, false_state: RUNNING, true_state: RUNNING,
+    type: condition}
+  __P4_table2_detect_seq:
+    children: [__P4_table2_detect_started, __P4_table2_detect_prec_0, __P4_table2_detect_prec_1,
+      __P4_table2_detect_set_started, __P4_table2_detect_action, __P4_table2_detect_running]
+    type: sequence
+  __P4_table2_detect_set_started:
+    immediate: {__P4_table2_detect_finished: false, __P4_table2_detect_started: true}
+    script: __P4_table2_detect_finished = False; __P4_table2_detect_started = True;
+      __A_return_var = "__P4_table2_detect_finished";
+    type: action
+  __P4_table2_detect_started: {expression: __P4_table2_detect_started, false_state: SUCCESS,
+    true_state: RUNNING, type: condition}
+  __P4_table2_force_goto_action:
+    immediate: None
+    postconditions:
+    - {__P4_table2_force_goto_finished: 'True', location: table2, prob: 0.95}
+    - {__P4_table2_force_goto_finished: 'True', location: ANY, prob: 0.05}
+    script: goto(table2);
+    type: action
+  __P4_table2_force_goto_finished: {expression: __P4_table2_force_goto_finished, false_state: RUNNING,
+    true_state: SUCCESS, type: condition}
+  __P4_table2_force_goto_running: {expression: true, false_state: RUNNING, true_state: RUNNING,
+    type: condition}
+  __P4_table2_force_goto_seq:
+    children: [__P4_table2_force_goto_started, __P4_table2_force_goto_set_started,
+      __P4_table2_force_goto_action, __P4_table2_force_goto_running]
+    type: sequence
+  __P4_table2_force_goto_set_started:
+    immediate: {__P4_table2_force_goto_finished: false, __P4_table2_force_goto_started: true}
+    script: __P4_table2_force_goto_finished = False; __P4_table2_force_goto_started
+      = True; __A_return_var = "__P4_table2_force_goto_finished";
+    type: action
+  __P4_table2_force_goto_started: {expression: __P4_table2_force_goto_started, false_state: SUCCESS,
+    true_state: RUNNING, type: condition}
+  __P5_table1_detect_action:
+    immediate: None
+    postconditions:
+    - {__P5_table1_detect_finished: 'True', prob: 0.5, 'seen[soda]': SUCCESS}
+    - {__P5_table1_detect_finished: 'True', prob: 0.5, 'seen[soda]': FAILURE}
+    script: detect(soda);
+    type: action
+  __P5_table1_detect_finished: {expression: __P5_table1_detect_finished, false_state: RUNNING,
+    true_state: SUCCESS, type: condition}
+  __P5_table1_detect_prec_0:
+    children: [___P5_table1_detect_prec_0_fallback, ___P5_table1_detect_prec_0_gc2]
+    false_state: FAILURE
+    type: sequence
+    var: luminousity
+    view:
+      children: []
+      expression: luminousity == SUCCESS
+      on_F: FAILURE
+      t: precondition
+  __P5_table1_detect_prec_1:
+    children: [___P5_table1_detect_prec_1_fallback, ___P5_table1_detect_prec_1_gc2]
+    cond_type: condition
+    false_state: FAILURE
+    type: sequence
+    val: FAILURE
+    var: seen[soda]
+    view:
+      children: []
+      expression: seen[soda] == FAILURE
+      on_F: FAILURE
+      t: precondition
+    what: soda
+  __P5_table1_detect_running: {expression: true, false_state: RUNNING, true_state: RUNNING,
+    type: condition}
+  __P5_table1_detect_seq:
+    children: [__P5_table1_detect_started, __P5_table1_detect_prec_0, __P5_table1_detect_prec_1,
+      __P5_table1_detect_set_started, __P5_table1_detect_action, __P5_table1_detect_running]
+    type: sequence
+  __P5_table1_detect_set_started:
+    immediate: {__P5_table1_detect_finished: false, __P5_table1_detect_started: true}
+    script: __P5_table1_detect_finished = False; __P5_table1_detect_started = True;
+      __A_return_var = "__P5_table1_detect_finished";
+    type: action
+  __P5_table1_detect_started: {expression: __P5_table1_detect_started, false_state: SUCCESS,
+    true_state: RUNNING, type: condition}
+  __P5_table1_force_goto_action:
+    immediate: None
+    postconditions:
+    - {__P5_table1_force_goto_finished: 'True', location: table1, prob: 0.95}
+    - {__P5_table1_force_goto_finished: 'True', location: ANY, prob: 0.05}
+    script: goto(table1);
+    type: action
+  __P5_table1_force_goto_finished: {expression: __P5_table1_force_goto_finished, false_state: RUNNING,
+    true_state: SUCCESS, type: condition}
+  __P5_table1_force_goto_running: {expression: true, false_state: RUNNING, true_state: RUNNING,
+    type: condition}
+  __P5_table1_force_goto_seq:
+    children: [__P5_table1_force_goto_started, __P5_table1_force_goto_set_started,
+      __P5_table1_force_goto_action, __P5_table1_force_goto_running]
+    type: sequence
+  __P5_table1_force_goto_set_started:
+    immediate: {__P5_table1_force_goto_finished: false, __P5_table1_force_goto_started: true}
+    script: __P5_table1_force_goto_finished = False; __P5_table1_force_goto_started
+      = True; __A_return_var = "__P5_table1_force_goto_finished";
+    type: action
+  __P5_table1_force_goto_started: {expression: __P5_table1_force_goto_started, false_state: SUCCESS,
+    true_state: RUNNING, type: condition}
+  __P5_table2_detect_action:
+    immediate: None
+    postconditions:
+    - {__P5_table2_detect_finished: 'True', prob: 0.5, 'seen[soda]': SUCCESS}
+    - {__P5_table2_detect_finished: 'True', prob: 0.5, 'seen[soda]': FAILURE}
+    script: detect(soda);
+    type: action
+  __P5_table2_detect_finished: {expression: __P5_table2_detect_finished, false_state: RUNNING,
+    true_state: SUCCESS, type: condition}
+  __P5_table2_detect_prec_0:
+    children: [___P5_table2_detect_prec_0_fallback, ___P5_table2_detect_prec_0_gc2]
+    false_state: FAILURE
+    type: sequence
+    var: luminousity
+    view:
+      children: []
+      expression: luminousity == SUCCESS
+      on_F: FAILURE
+      t: precondition
+  __P5_table2_detect_prec_1:
+    children: [___P5_table2_detect_prec_1_fallback, ___P5_table2_detect_prec_1_gc2]
+    cond_type: condition
+    false_state: FAILURE
+    type: sequence
+    val: FAILURE
+    var: seen[soda]
+    view:
+      children: []
+      expression: seen[soda] == FAILURE
+      on_F: FAILURE
+      t: precondition
+    what: soda
+  __P5_table2_detect_running: {expression: true, false_state: RUNNING, true_state: RUNNING,
+    type: condition}
+  __P5_table2_detect_seq:
+    children: [__P5_table2_detect_started, __P5_table2_detect_prec_0, __P5_table2_detect_prec_1,
+      __P5_table2_detect_set_started, __P5_table2_detect_action, __P5_table2_detect_running]
+    type: sequence
+  __P5_table2_detect_set_started:
+    immediate: {__P5_table2_detect_finished: false, __P5_table2_detect_started: true}
+    script: __P5_table2_detect_finished = False; __P5_table2_detect_started = True;
+      __A_return_var = "__P5_table2_detect_finished";
+    type: action
+  __P5_table2_detect_started: {expression: __P5_table2_detect_started, false_state: SUCCESS,
+    true_state: RUNNING, type: condition}
+  __P5_table2_force_goto_action:
+    immediate: None
+    postconditions:
+    - {__P5_table2_force_goto_finished: 'True', location: table2, prob: 0.95}
+    - {__P5_table2_force_goto_finished: 'True', location: ANY, prob: 0.05}
+    script: goto(table2);
+    type: action
+  __P5_table2_force_goto_finished: {expression: __P5_table2_force_goto_finished, false_state: RUNNING,
+    true_state: SUCCESS, type: condition}
+  __P5_table2_force_goto_running: {expression: true, false_state: RUNNING, true_state: RUNNING,
+    type: condition}
+  __P5_table2_force_goto_seq:
+    children: [__P5_table2_force_goto_started, __P5_table2_force_goto_set_started,
+      __P5_table2_force_goto_action, __P5_table2_force_goto_running]
+    type: sequence
+  __P5_table2_force_goto_set_started:
+    immediate: {__P5_table2_force_goto_finished: false, __P5_table2_force_goto_started: true}
+    script: __P5_table2_force_goto_finished = False; __P5_table2_force_goto_started
+      = True; __A_return_var = "__P5_table2_force_goto_finished";
+    type: action
+  __P5_table2_force_goto_started: {expression: __P5_table2_force_goto_started, false_state: SUCCESS,
+    true_state: RUNNING, type: condition}
+  ___P4_table1_detect_prec_0_dumb1: {expression: true, false_state: SUCCESS, true_state: SUCCESS,
+    type: condition}
+  ___P4_table1_detect_prec_0_dumb2: {expression: true, false_state: SUCCESS, true_state: SUCCESS,
+    type: condition}
+  ___P4_table1_detect_prec_0_fallback:
+    children: [___P4_table1_detect_prec_0_skipper, ___P4_table1_detect_prec_0_fix_F]
+    type: fallback
+  ___P4_table1_detect_prec_0_fix_F:
+    children: [___P4_table1_detect_prec_0_dumb2]
+    type: sequence
+  ___P4_table1_detect_prec_0_fix_R:
+    children: [___P4_table1_detect_prec_0_dumb1]
+    type: sequence
+  ___P4_table1_detect_prec_0_gc1: {expression: luminousity == SUCCESS, false_state: FAILURE,
+    true_state: SUCCESS, type: condition, val: SUCCESS, var: luminousity}
+  ___P4_table1_detect_prec_0_gc2: {expression: luminousity == SUCCESS, false_state: FAILURE,
+    true_state: SUCCESS, type: condition, val: SUCCESS, var: luminousity}
+  ___P4_table1_detect_prec_0_skipper:
+    children: [___P4_table1_detect_prec_0_gc1, ___P4_table1_detect_prec_0_fix_R]
+    type: skipper
+  ___P4_table1_detect_prec_1_dumb1: {expression: true, false_state: SUCCESS, true_state: SUCCESS,
+    type: condition}
+  ___P4_table1_detect_prec_1_dumb2: {expression: true, false_state: SUCCESS, true_state: SUCCESS,
+    type: condition}
+  ___P4_table1_detect_prec_1_fallback:
+    children: [___P4_table1_detect_prec_1_skipper, ___P4_table1_detect_prec_1_fix_F]
+    type: fallback
+  ___P4_table1_detect_prec_1_fix_F:
+    children: [___P4_table1_detect_prec_1_dumb2]
+    type: sequence
+  ___P4_table1_detect_prec_1_fix_R:
+    children: [___P4_table1_detect_prec_1_dumb1]
+    type: sequence
+  ___P4_table1_detect_prec_1_gc1: {expression: 'seen[soda] == FAILURE', false_state: FAILURE,
+    true_state: SUCCESS, type: condition, val: FAILURE, var: 'seen[soda]'}
+  ___P4_table1_detect_prec_1_gc2: {expression: 'seen[soda] == FAILURE', false_state: FAILURE,
+    true_state: SUCCESS, type: condition, val: FAILURE, var: 'seen[soda]'}
+  ___P4_table1_detect_prec_1_skipper:
+    children: [___P4_table1_detect_prec_1_gc1, ___P4_table1_detect_prec_1_fix_R]
+    type: skipper
+  ___P4_table2_detect_prec_0_dumb1: {expression: true, false_state: SUCCESS, true_state: SUCCESS,
+    type: condition}
+  ___P4_table2_detect_prec_0_dumb2: {expression: true, false_state: SUCCESS, true_state: SUCCESS,
+    type: condition}
+  ___P4_table2_detect_prec_0_fallback:
+    children: [___P4_table2_detect_prec_0_skipper, ___P4_table2_detect_prec_0_fix_F]
+    type: fallback
+  ___P4_table2_detect_prec_0_fix_F:
+    children: [___P4_table2_detect_prec_0_dumb2]
+    type: sequence
+  ___P4_table2_detect_prec_0_fix_R:
+    children: [___P4_table2_detect_prec_0_dumb1]
+    type: sequence
+  ___P4_table2_detect_prec_0_gc1: {expression: luminousity == SUCCESS, false_state: FAILURE,
+    true_state: SUCCESS, type: condition, val: SUCCESS, var: luminousity}
+  ___P4_table2_detect_prec_0_gc2: {expression: luminousity == SUCCESS, false_state: FAILURE,
+    true_state: SUCCESS, type: condition, val: SUCCESS, var: luminousity}
+  ___P4_table2_detect_prec_0_skipper:
+    children: [___P4_table2_detect_prec_0_gc1, ___P4_table2_detect_prec_0_fix_R]
+    type: skipper
+  ___P4_table2_detect_prec_1_dumb1: {expression: true, false_state: SUCCESS, true_state: SUCCESS,
+    type: condition}
+  ___P4_table2_detect_prec_1_dumb2: {expression: true, false_state: SUCCESS, true_state: SUCCESS,
+    type: condition}
+  ___P4_table2_detect_prec_1_fallback:
+    children: [___P4_table2_detect_prec_1_skipper, ___P4_table2_detect_prec_1_fix_F]
+    type: fallback
+  ___P4_table2_detect_prec_1_fix_F:
+    children: [___P4_table2_detect_prec_1_dumb2]
+    type: sequence
+  ___P4_table2_detect_prec_1_fix_R:
+    children: [___P4_table2_detect_prec_1_dumb1]
+    type: sequence
+  ___P4_table2_detect_prec_1_gc1: {expression: 'seen[soda] == FAILURE', false_state: FAILURE,
+    true_state: SUCCESS, type: condition, val: FAILURE, var: 'seen[soda]'}
+  ___P4_table2_detect_prec_1_gc2: {expression: 'seen[soda] == FAILURE', false_state: FAILURE,
+    true_state: SUCCESS, type: condition, val: FAILURE, var: 'seen[soda]'}
+  ___P4_table2_detect_prec_1_skipper:
+    children: [___P4_table2_detect_prec_1_gc1, ___P4_table2_detect_prec_1_fix_R]
+    type: skipper
+  ___P5_table1_detect_prec_0_dumb1: {expression: true, false_state: SUCCESS, true_state: SUCCESS,
+    type: condition}
+  ___P5_table1_detect_prec_0_dumb2: {expression: true, false_state: SUCCESS, true_state: SUCCESS,
+    type: condition}
+  ___P5_table1_detect_prec_0_fallback:
+    children: [___P5_table1_detect_prec_0_skipper, ___P5_table1_detect_prec_0_fix_F]
+    type: fallback
+  ___P5_table1_detect_prec_0_fix_F:
+    children: [___P5_table1_detect_prec_0_dumb2]
+    type: sequence
+  ___P5_table1_detect_prec_0_fix_R:
+    children: [___P5_table1_detect_prec_0_dumb1]
+    type: sequence
+  ___P5_table1_detect_prec_0_gc1: {expression: luminousity == SUCCESS, false_state: FAILURE,
+    true_state: SUCCESS, type: condition, val: SUCCESS, var: luminousity}
+  ___P5_table1_detect_prec_0_gc2: {expression: luminousity == SUCCESS, false_state: FAILURE,
+    true_state: SUCCESS, type: condition, val: SUCCESS, var: luminousity}
+  ___P5_table1_detect_prec_0_skipper:
+    children: [___P5_table1_detect_prec_0_gc1, ___P5_table1_detect_prec_0_fix_R]
+    type: skipper
+  ___P5_table1_detect_prec_1_dumb1: {expression: true, false_state: SUCCESS, true_state: SUCCESS,
+    type: condition}
+  ___P5_table1_detect_prec_1_dumb2: {expression: true, false_state: SUCCESS, true_state: SUCCESS,
+    type: condition}
+  ___P5_table1_detect_prec_1_fallback:
+    children: [___P5_table1_detect_prec_1_skipper, ___P5_table1_detect_prec_1_fix_F]
+    type: fallback
+  ___P5_table1_detect_prec_1_fix_F:
+    children: [___P5_table1_detect_prec_1_dumb2]
+    type: sequence
+  ___P5_table1_detect_prec_1_fix_R:
+    children: [___P5_table1_detect_prec_1_dumb1]
+    type: sequence
+  ___P5_table1_detect_prec_1_gc1: {expression: 'seen[soda] == FAILURE', false_state: FAILURE,
+    true_state: SUCCESS, type: condition, val: FAILURE, var: 'seen[soda]'}
+  ___P5_table1_detect_prec_1_gc2: {expression: 'seen[soda] == FAILURE', false_state: FAILURE,
+    true_state: SUCCESS, type: condition, val: FAILURE, var: 'seen[soda]'}
+  ___P5_table1_detect_prec_1_skipper:
+    children: [___P5_table1_detect_prec_1_gc1, ___P5_table1_detect_prec_1_fix_R]
+    type: skipper
+  ___P5_table2_detect_prec_0_dumb1: {expression: true, false_state: SUCCESS, true_state: SUCCESS,
+    type: condition}
+  ___P5_table2_detect_prec_0_dumb2: {expression: true, false_state: SUCCESS, true_state: SUCCESS,
+    type: condition}
+  ___P5_table2_detect_prec_0_fallback:
+    children: [___P5_table2_detect_prec_0_skipper, ___P5_table2_detect_prec_0_fix_F]
+    type: fallback
+  ___P5_table2_detect_prec_0_fix_F:
+    children: [___P5_table2_detect_prec_0_dumb2]
+    type: sequence
+  ___P5_table2_detect_prec_0_fix_R:
+    children: [___P5_table2_detect_prec_0_dumb1]
+    type: sequence
+  ___P5_table2_detect_prec_0_gc1: {expression: luminousity == SUCCESS, false_state: FAILURE,
+    true_state: SUCCESS, type: condition, val: SUCCESS, var: luminousity}
+  ___P5_table2_detect_prec_0_gc2: {expression: luminousity == SUCCESS, false_state: FAILURE,
+    true_state: SUCCESS, type: condition, val: SUCCESS, var: luminousity}
+  ___P5_table2_detect_prec_0_skipper:
+    children: [___P5_table2_detect_prec_0_gc1, ___P5_table2_detect_prec_0_fix_R]
+    type: skipper
+  ___P5_table2_detect_prec_1_dumb1: {expression: true, false_state: SUCCESS, true_state: SUCCESS,
+    type: condition}
+  ___P5_table2_detect_prec_1_dumb2: {expression: true, false_state: SUCCESS, true_state: SUCCESS,
+    type: condition}
+  ___P5_table2_detect_prec_1_fallback:
+    children: [___P5_table2_detect_prec_1_skipper, ___P5_table2_detect_prec_1_fix_F]
+    type: fallback
+  ___P5_table2_detect_prec_1_fix_F:
+    children: [___P5_table2_detect_prec_1_dumb2]
+    type: sequence
+  ___P5_table2_detect_prec_1_fix_R:
+    children: [___P5_table2_detect_prec_1_dumb1]
+    type: sequence
+  ___P5_table2_detect_prec_1_gc1: {expression: 'seen[soda] == FAILURE', false_state: FAILURE,
+    true_state: SUCCESS, type: condition, val: FAILURE, var: 'seen[soda]'}
+  ___P5_table2_detect_prec_1_gc2: {expression: 'seen[soda] == FAILURE', false_state: FAILURE,
+    true_state: SUCCESS, type: condition, val: FAILURE, var: 'seen[soda]'}
+  ___P5_table2_detect_prec_1_skipper:
+    children: [___P5_table2_detect_prec_1_gc1, ___P5_table2_detect_prec_1_fix_R]
+    type: skipper
+  __root_gc1_FV: {expression: 'seen[soda] == FAILURE', false_state: RUNNING, true_state: FAILURE,
+    type: condition, val: SUCCESS, var: 'seen[soda]'}
+  __root_gc1_SV: {expression: 'seen[soda] == SUCCESS', false_state: RUNNING, true_state: SUCCESS,
+    type: condition, val: SUCCESS, var: 'seen[soda]'}
+  __root_gc2_FV: {expression: 'seen[soda] == FAILURE', false_state: RUNNING, true_state: FAILURE,
+    type: condition, val: SUCCESS, var: 'seen[soda]'}
+  __root_gc2_SV: {expression: 'seen[soda] == SUCCESS', false_state: RUNNING, true_state: SUCCESS,
+    type: condition, val: SUCCESS, var: 'seen[soda]'}
+  _root_dumb1: {expression: true, false_state: SUCCESS, true_state: SUCCESS, type: condition}
+  _root_dumb2: {expression: true, false_state: SUCCESS, true_state: SUCCESS, type: condition}
+  _root_fallback:
+    children: [_root_skipper, _root_fix_F]
+    type: fallback
+  _root_fix_F:
+    children: [_root_dumb2, P4, P5]
+    type: sequence
+  _root_fix_R:
+    children: [_root_dumb1, P0]
+    type: sequence
+  _root_gc1:
+    children: [__root_gc1_SV, __root_gc1_FV]
+    expression: seen[soda] == SUCCESS
+    false_state: FAILURE
+    true_state: SUCCESS
+    type: skipper
+    val: SUCCESS
+    var: seen[soda]
+    view:
+      children: [__root_gc1_SV, __root_gc1_FV]
+  _root_gc2:
+    children: [__root_gc2_SV, __root_gc2_FV]
+    expression: seen[soda] == SUCCESS
+    false_state: FAILURE
+    true_state: SUCCESS
+    type: skipper
+    val: SUCCESS
+    var: seen[soda]
+    view:
+      children: [__root_gc2_SV, __root_gc2_FV]
+  _root_skipper:
+    children: [_root_gc1, _root_fix_R]
+    type: skipper
+  root:
+    children: [_root_fallback, _root_gc2]
+    cond_type: t/var_condition
+    false_state: FAILURE
+    post_check_condition: null
+    root: yes
+    type: sequence
+    val: SUCCESS
+    var: seen[soda]
+    view:
+      children: []
+      expression: seen[soda] == SUCCESS
+      on_F: FAILURE
+      t: precondition
+    what: soda
